@@ -1,0 +1,104 @@
+# Dependencies
+node_modules/
+GoNexus/frontend/node_modules/
+
+# Production builds
+dist/
+build/
+GoNexus/frontend/dist/
+
+# Log files
+*.log
+npm-debug.log*
+
+# Editor directories and files
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific ignores
+.agent/
+skill/
+uploads/
+GoNexus/uploads/
+
+# Config and Secrets
+*.env
+*.env.local
+*.env.*.local
+GoNexus/config/config.toml
+config/*.toml
+.envrc
+GoNexus/.docker-config/
+
+# Executables and Installation Packages
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+GoNexus/main
+*.msi
+*.msix
+*.appx
+*.pkg
+*.zip
+*.tar.gz
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Go specific
+.gocache/
+.gocache-cors/
+.gocache-*/
+GoNexus/.gocache/
+GoNexus/.gocache-cors/
+GoNexus/.gocache-*/
+go.work.sum
+/bin/
+/pkg/
+/src/
+vendor/
+
+# Node/Frontend specific
+.eslintcache
+.stylelintcache
+.cache/
+.npm/
+.yarn/
+*.tsbuildinfo
+
+# Build outputs in subdirectories
+**/dist/
+**/build/
+**/out/
+
+# Backup and Temporary files
+*~
+*.bak
+*.tmp
+*.temp
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# AWS/generated deployment files
+GoNexus/aws/*.generated.json
+GoNexus/frontend/bucket-policy.json
