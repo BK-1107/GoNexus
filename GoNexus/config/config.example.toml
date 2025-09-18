@@ -1,0 +1,70 @@
+[mainConfig]
+host = "0.0.0.0"
+port = 9090
+appName = "GoNexus"
+
+[emailConfig]
+email = "your-email@example.com"
+authcode = "YOUR_SMTP_APP_PASSWORD"
+
+[redisConfig]
+host = "127.0.0.1"
+port = 6379
+db = 0
+password = ""
+
+[mysqlConfig]
+host = "127.0.0.1"
+port = 3306
+user = "gonexus"
+password = "YOUR_MYSQL_PASSWORD"
+databaseName = "GoNexus"
+charset = "utf8mb4"
+
+[jwtConfig]
+expire_duration = 168
+issuer = "GoNexus"
+subject = "user"
+key = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
+
+[rabbitmqConfig]
+host = "127.0.0.1"
+port = 5672
+username = "gonexus"
+password = "YOUR_RABBITMQ_PASSWORD"
+vhost = "/"
+
+[ragModelConfig]
+embeddingModel = "gemini-embedding-001"
+chatModelName = "gemini-2.5-flash"
+docDir = "uploads"
+baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/"
+dimension = 3072
+apiKey = "YOUR_LLM_API_KEY"
+
+[chatModelConfig]
+modelName = "deepseek-chat"
+baseUrl = "https://api.deepseek.com"
+apiKey = "YOUR_DEEPSEEK_API_KEY"
+
+[embeddingModelConfig]
+modelName = "gemini-embedding-001"
+baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/"
+dimension = 3072
+apiKey = "YOUR_GOOGLE_API_KEY"
+
+[visionModelConfig]
+modelName = "gemini-2.5-flash"
+baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/"
+apiKey = "YOUR_GOOGLE_API_KEY"
+
+[voiceServiceConfig]
+voiceServiceApiKey = "YOUR_VOICE_SERVICE_API_KEY"
+voiceServiceSecretKey = "YOUR_VOICE_SERVICE_SECRET_KEY"
+
+[registerConfig]
+secret = "CHANGE_ME_REGISTER_SECRET"
+
+[defaultUserConfig]
+username = ""
+password = ""
