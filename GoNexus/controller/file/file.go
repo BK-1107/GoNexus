@@ -56,3 +56,25 @@ func UploadRagFile(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// 处理知识库文件删除请求。删除逻辑交给 service 层。
+func DeleteKnowledgeFile(c *gin.Context) {
+	res := new(controller.Response)
+
+	filename := c.Query("filename")
+	username := c.GetString("userName")
+
+	if filename == "" {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+	// 删除文件的业务逻辑在 service 层实现，controller 只负责调用和返回结果。
+	err := file.DeleteKnowledgeFile(username, filename)
+	if err != nil {
+		log.Println("DeleteKnowledgeFile fail ", err)
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
+		return
+	}
+	// 删除成功，返回成功状态码和消息。
+	res.Success()
+	c.JSON(http.StatusOK, res)
+}
