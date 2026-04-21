@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+GoNexus/vue-frontend/node_modules/
+
+# Production builds
+dist/
+build/
+GoNexus/vue-frontend/dist/
+
+# Log files
+*.log
+npm-debug.log*
+
+# Editor directories and files
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

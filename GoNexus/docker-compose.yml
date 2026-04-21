@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: gopherai_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: GopherAI
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  redis:
+    image: redis:7.0
+    container_name: gopherai_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    # 开启 Redis 对 Vector 向量支持的模块（如果是标准镜像可能没有，如果有 RAG 需求建议使用 redis/redis-stack）
+    # 注：为了支持 RAG 的向量检索，推荐启动带有 RediSearch 模块的 Redis
+    # image: redis/redis-stack-server:latest
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: gopherai_rabbitmq
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: root
+      RABBITMQ_DEFAULT_PASS: 123456
+    ports:
+      - "5672:5672"   # 消息队列端口
+      - "15672:15672" # RabbitMQ 管理后台网页端跨口 (用户名 root 密码 123456)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
