@@ -4,10 +4,12 @@ import (
 	"GoNexus/common/code"
 	myemail "GoNexus/common/email"
 	myredis "GoNexus/common/redis"
+	"GoNexus/config"
 	"GoNexus/dao/user"
 	"GoNexus/model"
 	"GoNexus/utils"
 	"GoNexus/utils/myjwt"
+	"crypto/subtle"
 	"strings"
 )
 
@@ -29,6 +31,15 @@ func Login(username, password string) (string, code.Code) {
 	}
 
 	return token, code.CodeSuccess
+}
+
+func CheckInviteCode(inviteCode string) code.Code {
+	inviteCode = strings.TrimSpace(inviteCode)
+	registerSecret := strings.TrimSpace(config.GetConfig().GetRegisterSecret())
+	if registerSecret == "" || subtle.ConstantTimeCompare([]byte(inviteCode), []byte(registerSecret)) != 1 {
+		return code.CodeForbidden
+	}
+	return code.CodeSuccess
 }
 
 func Register(email, password, captcha string) (string, code.Code) {

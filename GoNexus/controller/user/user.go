@@ -49,6 +49,13 @@ type (
 		controller.Response
 	}
 
+	CheckInviteRequest struct {
+		InviteCode string `json:"inviteCode" binding:"required"`
+	}
+
+	CheckInviteResponse struct {
+		controller.Response
+	}
 )
 
 // Login 处理用户登录请求。
@@ -116,3 +123,20 @@ func HandleCaptcha(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func CheckInvite(c *gin.Context) {
+	req := new(CheckInviteRequest)
+	res := new(CheckInviteResponse)
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	if code_ := user.CheckInviteCode(req.InviteCode); code_ != code.CodeSuccess {
+		c.JSON(http.StatusOK, res.CodeOf(code_))
+		return
+	}
+
+	res.Success()
+	c.JSON(http.StatusOK, res)
+}
