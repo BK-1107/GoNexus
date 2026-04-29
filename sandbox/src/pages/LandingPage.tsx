@@ -133,9 +133,13 @@ export function LandingPage() {
               dragSnapToOrigin
               whileHover={{ scale: 1.1, rotate: -5, cursor: 'grab' }}
               whileDrag={{ cursor: 'grabbing' }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
               animate={{ scale: [1, 1.2, 1] }} 
-              transition={{ scale: { duration: 3, repeat: Infinity } }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 400, 
+                damping: 10,
+                scale: { duration: 3, repeat: Infinity }
+              }}
               className="absolute bottom-20 left-10 w-32 h-32 border-4 border-black rounded-full halftone-bg shadow-brutal cursor-pointer z-10"
             />
             
