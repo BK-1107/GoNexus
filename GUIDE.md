@@ -4,6 +4,29 @@ Welcome to the **GoNexus** ecosystem. This guide provides deep-dive instructions
 
 ---
 
+## 0. Project Setup (Essential)
+Since GoNexus ignores sensitive environment and large dependency files for security, you must manually perform these steps after cloning the repository.
+
+### Environment Configuration
+The backend requires a `config.toml` file to store API keys and database credentials. 
+*   **Location**: `GoNexus/config/config.toml`
+*   **Key Fields**:
+    *   `RagApiKey`: Your LLM API key for RAG operations.
+    *   `Mysql`: Root password and database name (default: `GopherAI`).
+    *   `Redis`: Connection details (default: `localhost:6379`).
+    *   `RabbitMQ`: Credentials (default: `root / 123456`).
+
+### Dependency Installation
+You must fetch the required packages for both environments:
+*   **Backend (Go)**: Run `go mod tidy` in the `GoNexus` directory to download all Go modules.
+*   **Frontend (React)**: Run `npm install` in the `sandbox` directory to install UI dependencies.
+
+### Infrastructure Initialization
+GoNexus relies on MySQL, Redis, and RabbitMQ. These are managed via Docker to ensure consistency.
+*   Run `docker-compose up -d` in the `GoNexus` directory to start all services in the background.
+
+---
+
 ## 1. Authentication & Security
 *   **Sign Up**: GoNexus uses a secure registration flow. If configured, you'll receive a verification code via SMTP.
 *   **JWT Tokens**: Your session is managed by a JSON Web Token. For security, these tokens are stored in the application state and refreshed as needed.
