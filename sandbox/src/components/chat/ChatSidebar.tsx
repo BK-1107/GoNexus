@@ -1,17 +1,22 @@
 import { MessageSquare, Plus, Settings, Home, LogOut, Trash2, Database, Zap } from "lucide-react"
 import { Link } from "react-router-dom"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useChatStore } from "@/store/chatStore"
 import { useAuthStore } from "@/store/authStore"
 import { chatApi } from "@/api/chat"
+import { NeoConfirm } from "@/components/ui/NeoConfirm"
 
 export function ChatSidebar() {
   const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType } = useChatStore()
   const { logout, username } = useAuthStore()
+  
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [deleteTitle, setDeleteTitle] = useState("")
 
   // 加载会话列表
   useEffect(() => {
     const fetchSessions = async () => {
+      console.log(`[Sidebar] Fetching sessions... Restored ID: ${currentSessionId}`)
       try {
         const res = await chatApi.getSessions()
         if (res.data?.status_code === 1000 && res.data.sessions) {
@@ -32,9 +37,12 @@ export function ChatSidebar() {
   // [修复] 刷新后自动加载当前会话的历史记录
   useEffect(() => {
     if (currentSessionId && sessions.length > 0 && messages.length === 0) {
-      const exists = sessions.some(s => s.id === currentSessionId)
-      if (exists) {
+      const selectedSession = sessions.find(s => s.id === currentSessionId)
+      if (selectedSession) {
+        console.log(`[Auto-Recover] Triggering history fetch for: ${currentSessionId}`)
         loadSessionHistory(currentSessionId)
+      } else {
+        console.warn(`[Auto-Recover] Session ${currentSessionId} not found in loaded sessions.`)
       }
     }
   }, [sessions, currentSessionId, messages.length])
@@ -55,6 +63,7 @@ export function ChatSidebar() {
   }
 
   const handleSessionSelect = (sessionId: string) => {
+    if (sessionId === currentSessionId && messages.length > 0) return
     setCurrentSessionId(sessionId)
     loadSessionHistory(sessionId)
   }
@@ -64,20 +73,26 @@ export function ChatSidebar() {
     setMessages([])
   }
 
-  const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
+  const openDeleteModal = (e: React.MouseEvent, s: any) => {
     e.stopPropagation()
-    if (!confirm("Are you sure you want to delete this session?")) return
+    setDeleteId(s.id)
+    setDeleteTitle(s.title || "Untitled Chat")
+  }
 
+  const confirmDelete = async () => {
+    if (!deleteId) return
     try {
-      const res = await chatApi.deleteSession(sessionId)
+      const res = await chatApi.deleteSession(deleteId)
       if (res.data?.status_code === 1000) {
-        setSessions(sessions.filter(s => s.id !== sessionId))
-        if (currentSessionId === sessionId) {
+        setSessions(sessions.filter(s => s.id !== deleteId))
+        if (currentSessionId === deleteId) {
           handleNewChat()
         }
       }
     } catch (err) {
       console.error("Failed to delete session", err)
+    } finally {
+      setDeleteId(null)
     }
   }
 
@@ -143,7 +158,7 @@ export function ChatSidebar() {
                 <span className="truncate pr-6">{s.title || "Untitled Chat"}</span>
               </button>
               <button 
-                onClick={(e) => handleDeleteSession(e, s.id)}
+                onClick={(e) => openDeleteModal(e, s)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 hover:text-destructive transition-all"
               >
                 <Trash2 size={16} />
@@ -170,6 +185,17 @@ export function ChatSidebar() {
           </button>
         </div>
       </div>
+
+      <NeoConfirm 
+        isOpen={deleteId !== null}
+        title="Delete Session?"
+        message={`Are you sure you want to delete "${deleteTitle}"? This cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteId(null)}
+        confirmText="Burn It!"
+        cancelText="Keep It"
+        type="danger"
+      />
     </aside>
   )
 }
