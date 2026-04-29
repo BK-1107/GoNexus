@@ -1,75 +1,107 @@
-# GopherAI
+# GoNexus: The Ultimate AI Playground
 
-This is a comprehensive full-stack artificial intelligence web tool built to provide a conversational AI interface, local knowledge base retrieval (RAG), and modular model integration.
+> **STRIKING. RAW. POWERFUL.**
+> GoNexus is not just another AI tool; it's a high-performance, Neo-Brutalist engineered ecosystem for next-generation intelligence. Built with a "Zero-Compromise" design philosophy, combining a high-speed Go backend with a visually aggressive React frontend.
 
-## Platform Architecture
+---
 
-The system is designed with a decoupled frontend-backend architecture to ensure scalability and ease of maintenance:
+## Visual Identity: Neo-Brutalism
+GoNexus breaks the mold of modern "soft" UI. We embrace **hard borders**, **clashing colors**, **thick shadows**, and **raw typography**. It's designed to be loud, fast, and unforgettable.
 
-- Frontend: Built with Vue 3 and Element Plus, providing a responsive and modern Single Page Application (SPA) experience.
-- Backend: Built with Go (Golang) and the Gin web framework to provide high-performance API services and Server-Sent Events (SSE) streaming capabilities.
-- Storage & Middleware:
-  - MySQL: Relational data persistence (users, sessions, message history).
-  - Redis: Caching, session states, and high-performance Vector Indexing for RAG.
-  - RabbitMQ: Asynchronous task queuing for message logging and background operations.
+---
+
+## Tech Stack
+
+### Backend: The Engine (GoNexus Core)
+*   **Language:** Go (Golang) 1.21+
+*   **Framework:** Gin Gonic (High-performance HTTP routing)
+*   **Streaming:** SSE (Server-Sent Events) for real-time AI response delivery
+*   **Storage:** 
+    *   **MySQL 8.0:** Persistent data (Users, Sessions, History)
+    *   **Redis Stack:** High-speed caching & Vector search for RAG
+    *   **RabbitMQ:** Asynchronous background processing & Log queuing
+
+### Frontend: The Interface (Nexus Sandbox)
+*   **Core:** React 18 + TypeScript
+*   **Styling:** Tailwind CSS (Custom Brutalist tokens)
+*   **Animations:** Framer Motion (Aggressive micro-interactions)
+*   **State:** Zustand (Persistent atomic state management)
+*   **Icons:** Lucide React
+
+---
 
 ## Core Features
 
-1. AI Chat Interface
-   - Multi-session management allowing users to maintain parallel conversations.
-   - Real-time text generation directly streamed to the client using Server-Sent Events (SSE).
-   - Dynamic model switching to communicate with different LLMs.
+*   **Nexus Chat:** Real-time streaming conversations with sub-millisecond UI latency.
+*   **RAG Core (Knowledge Base):** Upload documents and chat with your own data using localized vector indexing.
+*   **Multi-Model Factory:** Seamlessly switch between OpenAI, Gemini, and local models.
+*   **Neo-Brutalist UI:** A unique aesthetic experience that prioritizes clarity and impact over generic softness.
+*   **Deep Persistence:** Intelligent session recovery and cross-browser history sync.
 
-2. Retrieval-Augmented Generation (RAG)
-   - Capability to upload and parse documents.
-   - Vector embedding generation and semantic similarity search leveraging Redis Vector functionalities to enhance model prompts with specific, localized knowledge.
+---
 
-3. User System
-   - Secure registration process utilizing SMTP email verification codes.
-   - JWT-based authentication combined with secure password hashing.
+## Quick Start Guide
 
-4. Extensibility
-   - Architecture implements a Factory Pattern for AI Helpers, making it straightforward to plug in additional model providers (e.g., OpenAI, local Ollama, Google Gemini) via standard interfaces.
+### 1. Prerequisites
+Ensure you have the following installed:
+*   [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+*   [Go](https://go.dev/dl/) (1.21+)
+*   [Node.js](https://nodejs.org/) (18+)
 
-## Setup and Deployment
-
-Dependencies:
-
-- Go 1.20+
-- Node.js 16+
-- Docker & Docker Compose
-
-### Start Infrastructure
-
-Use the provided compose configuration to initialize the required middleware:
-
+### 2. Infrastructure Setup (Middleware)
+Launch the database, cache, and message queue in one shot:
 ```bash
+cd GoNexus
 docker-compose up -d
 ```
 
-This will start MySQL, Redis, and RabbitMQ simultaneously.
+### 3. Backend Configuration
+1.  Navigate to `GoNexus/config/`.
+2.  Create/Modify `config.toml`.
+3.  Inject your API Keys (RAG, AI Providers) and database credentials.
 
-### Configure Environment
-
-Modify `config/config.toml` to inject your corresponding API keys (e.g., Aliyun Dashscope), SMTP credentials, and database passwords.
-
-### Run Backend
-
-Navigate to the source directory and start the Go server:
-
+### 4. Fire Up the Backend
 ```bash
+cd GoNexus
 go run main.go
 ```
+*Server will listen on port 9090.*
 
-The API server will typically listen on port 9090.
-
-### Run Frontend
-
-Navigate to the `vue-frontend` directory, install dependencies, and start the development server:
-
+### 5. Launch the Frontend
 ```bash
+cd sandbox
 npm install
-npm run serve
+npm run dev
 ```
+*Access the interface at http://localhost:5173.*
 
-The web interface will be accessible via localhost.
+---
+
+## Usage Guide & Best Practices
+
+### Starting a Conversation
+Click the **"NEW CHAT"** button in the sidebar. Your session is automatically saved to the database as you type.
+
+### Using the Knowledge Base (RAG)
+1.  Go to the **"Knowledge"** tab.
+2.  Upload your .txt or .pdf files.
+3.  Switch the chat mode to **"RAG Core"** using the toggle in the sidebar.
+4.  Ask questions based on your uploaded documents.
+
+### Visual Interactions
+*   **Draggable Elements:** In the Hero section, geometric shapes are interactive. Drag them to play with the Neo-Brutalist layout.
+*   **Hard-Shadow Buttons:** Every button has a "Hard Press" effect. You'll feel the interaction.
+
+---
+
+## Security & Environment
+To keep the repository clean and secure, the following are automatically ignored:
+*   `*.env` files (Secrets)
+*   `config.toml` (Local configurations)
+*   `node_modules` (Dependencies)
+*   `*.exe / *.zip / *.pkg` (Large installation packages)
+
+---
+
+## License
+MIT License - Build something epic.
