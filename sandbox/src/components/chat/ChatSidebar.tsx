@@ -97,24 +97,26 @@ export function ChatSidebar() {
   }
 
   return (
-    <aside className="w-80 flex flex-col h-full bg-white border-4 border-black shadow-brutal p-6 gap-6 relative z-20">
+    <aside className="w-80 flex flex-col h-full bg-white border-r-4 border-black pt-6 px-4 pb-4 gap-4 relative z-20">
       
-      <div className="flex items-center justify-between mb-4">
+      {/* Header Area */}
+      <div className="flex items-center justify-between mb-2">
         <Link to="/" className="flex items-center gap-3 group">
-          <div className="w-12 h-12 bg-primary border-4 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none transition-all">
-            <span className="text-black font-black text-2xl">GN</span>
+          <div className="w-12 h-12 bg-[#4ade80] border-4 border-black shadow-[4px_4px_0px_#000] flex items-center justify-center group-hover:translate-y-1 group-hover:translate-x-1 group-hover:shadow-none transition-all active:scale-95">
+            <span className="text-black font-black text-2xl italic">G</span>
           </div>
-          <h1 className="text-2xl font-black uppercase tracking-tighter">GoNexus</h1>
+          <h1 className="text-xl font-black uppercase tracking-tighter leading-none mt-1">GopherAI</h1>
         </Link>
-        <Link to="/" className="comic-btn w-10 h-10 bg-secondary">
+        <Link to="/" className="w-10 h-10 flex items-center justify-center bg-white border-4 border-black shadow-[4px_4px_0px_#000] hover:translate-y-1 hover:translate-x-1 hover:shadow-none transition-all active:scale-95">
           <Home size={20} strokeWidth={3} />
         </Link>
       </div>
 
+      {/* Primary Action Buttons */}
       <div className="flex flex-col gap-3">
         <button 
           onClick={handleNewChat}
-          className="comic-btn bg-primary text-black py-4 px-4 w-full gap-2 text-xl"
+          className="bg-[#4ade80] text-black py-4 px-4 w-full gap-2 text-lg border-4 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center font-black uppercase"
         >
           <Plus size={24} strokeWidth={4} />
           <span>New Chat</span>
@@ -122,64 +124,69 @@ export function ChatSidebar() {
 
         <Link 
           to="/knowledge"
-          className="comic-btn bg-accent text-black py-3 px-4 w-full gap-2 text-lg hover:rotate-1"
+          className="bg-[#4ade80] text-black py-3 px-4 w-full gap-2 text-md border-4 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center font-black uppercase"
         >
           <Database size={20} strokeWidth={3} />
           <span>Knowledge</span>
         </Link>
       </div>
 
-      <div className="bg-muted border-4 border-black p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-black uppercase">
-          <Zap size={14} className={modelType === '2' ? 'text-primary' : 'text-black/30'} />
-          Mode: {modelType === '1' ? 'Standard' : 'RAG Core'}
+      {/* Mode Indicator */}
+      <div className="bg-[#f1f5f9] border-4 border-black p-4 flex items-center shadow-[4px_4px_0px_#000] mt-1">
+        <div className="flex items-center gap-3 text-sm font-black uppercase">
+          <Zap size={18} className="text-[#4ade80] fill-[#4ade80]/20" strokeWidth={2.5} />
+          <span>Mode: {modelType === '1' ? 'Standard' : 'RAG Core'}</span>
         </div>
       </div>
       
-      <div className="flex-1 flex flex-col gap-4 mt-2 overflow-y-auto pr-2">
-        <div className="flex justify-between items-center bg-secondary self-start px-2 py-1 border-2 border-black transform -rotate-2">
-          <h3 className="text-sm font-black text-black uppercase tracking-widest">Sessions</h3>
+      {/* Sessions Area */}
+      <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2 mt-2">
+        <div className="bg-[#FACC15] px-4 py-2 border-4 border-black w-fit shadow-[4px_4px_0px_#000] hover:-rotate-2 transition-transform">
+          <h3 className="text-sm font-black text-black uppercase tracking-widest leading-none">Sessions</h3>
         </div>
         
-        {sessions.length === 0 ? (
-          <div className="text-center py-8 font-bold text-black/30 italic uppercase">No Sessions Yet</div>
-        ) : (
-          sessions.map((s) => (
-            <div key={s.id} className="group relative">
-              <button 
-                onClick={() => handleSessionSelect(s.id)}
-                className={`flex items-center gap-3 px-4 py-3 border-4 border-black transition-all font-bold text-left w-full ${
-                  currentSessionId === s.id 
-                    ? "bg-accent text-black shadow-brutal translate-y-[-2px] translate-x-[-2px]" 
-                    : "bg-white text-black hover:bg-muted hover:shadow-brutal-active"
-                }`}
-              >
-                <MessageSquare size={20} strokeWidth={currentSessionId === s.id ? 3 : 2} />
-                <span className="truncate pr-6">{s.title || "Untitled Chat"}</span>
-              </button>
-              <button 
-                onClick={(e) => openDeleteModal(e, s)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 hover:text-destructive transition-all"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))
-        )}
+        <div className="flex flex-col gap-3">
+          {sessions.length === 0 ? (
+            <div className="text-center py-8 font-bold text-black/30 italic uppercase">No Sessions Yet</div>
+          ) : (
+            sessions.map((s) => (
+              <div key={s.id} className="group relative">
+                <button 
+                  onClick={() => handleSessionSelect(s.id)}
+                  className={`flex items-center gap-3 px-4 py-4 border-4 border-black transition-all duration-200 font-bold text-left w-full relative ${
+                    currentSessionId === s.id 
+                      ? "bg-[#A855F7] text-black shadow-[4px_4px_0px_#000] translate-y-0 translate-x-0 active:translate-x-1 active:translate-y-1 active:shadow-none" 
+                      : "bg-white text-black hover:bg-muted shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+                  }`}
+                >
+                  <MessageSquare size={20} strokeWidth={currentSessionId === s.id ? 3 : 2} />
+                  <span className="truncate pr-6 font-black uppercase text-sm">{s.title || "Untitled Chat"}</span>
+                </button>
+                <button 
+                  onClick={(e) => openDeleteModal(e, s)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-2 hover:bg-destructive border-2 border-transparent hover:border-black transition-all active:scale-90 rounded-none bg-white shadow-[2px_2px_0px_#000] group-hover:translate-x-0"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      <div className="pt-4 border-t-4 border-black mt-auto flex flex-col gap-3">
-        <div className="bg-muted border-4 border-black p-3 flex items-center gap-3">
-          <div className="w-8 h-8 bg-black rounded-full" />
-          <span className="font-black truncate uppercase text-sm">{username || "Guest User"}</span>
+      {/* Footer Area */}
+      <div className="pt-4 mt-auto flex flex-col gap-3">
+        <div className="bg-[#f1f5f9] border-4 border-black p-3 flex items-center gap-3 shadow-[4px_4px_0px_#000]">
+          <div className="w-6 h-6 bg-black rounded-full" />
+          <span className="font-black truncate uppercase text-xs">{username || "Guest User"}</span>
         </div>
-        <div className="flex gap-2">
-          <button className="comic-card flex-1 flex items-center justify-center gap-2 py-3 bg-white text-black hover:bg-primary transition-all">
+        <div className="flex gap-3">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-white text-black border-4 border-black shadow-[4px_4px_0px_#000] hover:bg-primary hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all">
             <Settings size={18} strokeWidth={3} />
           </button>
           <button 
             onClick={logout}
-            className="comic-card flex-1 flex items-center justify-center gap-2 py-3 bg-destructive text-black hover:opacity-80 transition-all"
+            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#ef4444] text-black border-4 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
           >
             <LogOut size={18} strokeWidth={3} />
           </button>
