@@ -6,7 +6,7 @@ import { useAuthStore } from "@/store/authStore"
 import { chatApi } from "@/api/chat"
 
 export function ChatSidebar() {
-  const { sessions, setSessions, currentSessionId, setCurrentSessionId, setMessages, modelType } = useChatStore()
+  const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType } = useChatStore()
   const { logout, username } = useAuthStore()
 
   // 加载会话列表
@@ -29,8 +29,17 @@ export function ChatSidebar() {
     fetchSessions()
   }, [setSessions])
 
-  const handleSessionSelect = async (sessionId: string) => {
-    setCurrentSessionId(sessionId)
+  // [修复] 刷新后自动加载当前会话的历史记录
+  useEffect(() => {
+    if (currentSessionId && sessions.length > 0 && messages.length === 0) {
+      const exists = sessions.some(s => s.id === currentSessionId)
+      if (exists) {
+        loadSessionHistory(currentSessionId)
+      }
+    }
+  }, [sessions, currentSessionId, messages.length])
+
+  const loadSessionHistory = async (sessionId: string) => {
     try {
       const res = await chatApi.getHistory(sessionId)
       if (res.data?.status_code === 1000 && res.data.history) {
@@ -43,6 +52,11 @@ export function ChatSidebar() {
     } catch (err) {
       console.error("Failed to fetch history", err)
     }
+  }
+
+  const handleSessionSelect = (sessionId: string) => {
+    setCurrentSessionId(sessionId)
+    loadSessionHistory(sessionId)
   }
 
   const handleNewChat = () => {
