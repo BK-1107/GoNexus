@@ -1,5 +1,5 @@
 import { Upload, Image as ImageIcon, X, Loader2, CheckCircle2, Zap, Search, Info } from "lucide-react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { imageApi } from "@/api/image"
 
