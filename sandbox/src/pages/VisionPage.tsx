@@ -11,7 +11,7 @@ export function VisionPage() {
           <Link to="/" className="comic-btn p-2 bg-secondary text-black">
             <ArrowLeft size={24} strokeWidth={3} />
           </Link>
-          <h1 className="text-3xl font-black uppercase tracking-tighter">Vision <span className="text-primary">Lab</span></h1>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Vision <span className="text-primary">Nexus</span></h1>
         </div>
       </header>
 

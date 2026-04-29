@@ -1,6 +1,5 @@
 package router
 
-/*
 import (
 	"GopherAI/controller/image"
 
@@ -8,7 +7,5 @@ import (
 )
 
 func ImageRouter(r *gin.RouterGroup) {
-
 	r.POST("/recognize", image.RecognizeImage)
 }
-*/

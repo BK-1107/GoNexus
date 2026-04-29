@@ -28,25 +28,9 @@ func UploadRagFile(username string, file *multipart.FileHeader) (string, error) 
 		return "", err
 	}
 
-	// 删除用户目录中的所有现有文件及其索引（每个用户只能有一个文件）
-	files, err := os.ReadDir(userDir)
-	if err == nil {
-		for _, f := range files {
-			if !f.IsDir() {
-				filename := f.Name()
-				// 删除该文件对应的 Redis 索引
-				if err := rag.DeleteIndex(context.Background(), filename); err != nil {
-					log.Printf("Failed to delete index for %s: %v", filename, err)
-					// 继续执行，不因为索引删除失败而中断文件上传
-				}
-			}
-		}
-	}
-	// 删除用户目录中的所有文件
-	if err := utils.RemoveAllFilesInDir(userDir); err != nil {
-		log.Printf("Failed to clean user directory %s: %v", userDir, err)
-		return "", err
-	}
+	// [优化] 不再删除旧文件，支持多文档 RAG
+	// 使用统一的 IndexID: "kb_" + username
+	indexID := "kb_" + username
 
 	// 生成UUID作为唯一文件名
 	uuid := utils.GenerateUUID()
@@ -78,8 +62,21 @@ func UploadRagFile(username string, file *multipart.FileHeader) (string, error) 
 
 	log.Printf("File uploaded successfully: %s", filePath)
 
+	// 如果是图片文件，跳过索引步骤，仅完成上传
+	isImage := map[string]bool{
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+		".webp": true,
+	}[ext]
+
+	if isImage {
+		log.Printf("Image uploaded without indexing: %s", filePath)
+		return filePath, nil
+	}
+
 	// 创建 RAG 索引器并对文件进行向量化
-	indexer, err := rag.NewRAGIndexer(filename, config.GetConfig().RagModelConfig.RagEmbeddingModel)
+	indexer, err := rag.NewRAGIndexer(indexID, config.GetConfig().RagModelConfig.RagEmbeddingModel)
 	if err != nil {
 		log.Printf("Failed to create RAG indexer: %v", err)
 		// 删除已上传的文件
@@ -90,12 +87,26 @@ func UploadRagFile(username string, file *multipart.FileHeader) (string, error) 
 	// 读取文件内容并创建向量索引
 	if err := indexer.IndexFile(context.Background(), filePath); err != nil {
 		log.Printf("Failed to index file: %v", err)
-		// 删除已上传的文件和索引
+		// 删除已上传的文件
 		os.Remove(filePath)
-		rag.DeleteIndex(context.Background(), filename)
+		// 注意：多文件模式下不建议直接删除整个 indexID，除非这是第一个文件
 		return "", err
 	}
 
-	log.Printf("File indexed successfully: %s", filename)
+	log.Printf("File indexed successfully: %s to %s", filename, indexID)
 	return filePath, nil
+}
+
+func DeleteKnowledgeFile(username, filename string) error {
+	filePath := filepath.Join("uploads", username, filename)
+	
+	// 删除物理文件
+	if err := os.Remove(filePath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+
+	log.Printf("Knowledge file deleted: %s/%s", username, filename)
+	return nil
 }

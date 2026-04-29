@@ -3,7 +3,8 @@ package session
 import (
 	"GopherAI/common/aihelper"
 	"GopherAI/common/code"
-	"GopherAI/dao/session"
+	"GopherAI/config"
+	daosession "GopherAI/dao/session"
 	"GopherAI/model"
 	"context"
 	"log"
@@ -17,15 +18,17 @@ var ctx = context.Background()
 func GetUserSessionsByUserName(userName string) ([]model.SessionInfo, error) {
 	//获取用户的所有会话ID
 
-	manager := aihelper.GetGlobalManager()
-	Sessions := manager.GetUserSessions(userName)
+	Sessions, err := daosession.GetSessionsByUserName(userName)
+	if err != nil {
+		return nil, err
+	}
 
 	var SessionInfos []model.SessionInfo
 
 	for _, session := range Sessions {
 		SessionInfos = append(SessionInfos, model.SessionInfo{
-			SessionID: session,
-			Title:     session, // 暂时用sessionID作为标题，后续重构需要的时候可以更改
+			SessionID: session.ID,
+			Title:     session.Title,
 		})
 	}
 
@@ -39,7 +42,7 @@ func CreateSessionAndSendMessage(userName string, userQuestion string, modelType
 		UserName: userName,
 		Title:    userQuestion, // 可以根据需求设置标题，这边暂时用用户第一次的问题作为标题
 	}
-	createdSession, err := session.CreateSession(newSession)
+	createdSession, err := daosession.CreateSession(newSession)
 	if err != nil {
 		log.Println("CreateSessionAndSendMessage CreateSession error:", err)
 		return "", "", code.CodeServerBusy
@@ -47,11 +50,11 @@ func CreateSessionAndSendMessage(userName string, userQuestion string, modelType
 
 	//2：获取AIHelper并通过其管理消息
 	manager := aihelper.GetGlobalManager()
-	config := map[string]interface{}{
-		"apiKey":   "your-api-key", // TODO: 从配置中获取
+	config_ := map[string]interface{}{
+		"apiKey":   config.GetConfig().RagApiKey,
 		"username": userName,       // 用于 RAG 模型获取用户文档
 	}
-	helper, err := manager.GetOrCreateAIHelper(userName, createdSession.ID, modelType, config)
+	helper, err := manager.GetOrCreateAIHelper(userName, createdSession.ID, modelType, config_)
 	if err != nil {
 		log.Println("CreateSessionAndSendMessage GetOrCreateAIHelper error:", err)
 		return "", "", code.AIModelFail
@@ -73,7 +76,7 @@ func CreateStreamSessionOnly(userName string, userQuestion string) (string, code
 		UserName: userName,
 		Title:    userQuestion,
 	}
-	createdSession, err := session.CreateSession(newSession)
+	createdSession, err := daosession.CreateSession(newSession)
 	if err != nil {
 		log.Println("CreateStreamSessionOnly CreateSession error:", err)
 		return "", code.CodeServerBusy
@@ -90,11 +93,11 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 	}
 
 	manager := aihelper.GetGlobalManager()
-	config := map[string]interface{}{
-		"apiKey":   "your-api-key", // TODO: 从配置中获取
+	config_ := map[string]interface{}{
+		"apiKey":   config.GetConfig().RagApiKey,
 		"username": userName,       // 用于 RAG 模型获取用户文档
 	}
-	helper, err := manager.GetOrCreateAIHelper(userName, sessionID, modelType, config)
+	helper, err := manager.GetOrCreateAIHelper(userName, sessionID, modelType, config_)
 	if err != nil {
 		log.Println("StreamMessageToExistingSession GetOrCreateAIHelper error:", err)
 		return code.AIModelFail
@@ -193,4 +196,21 @@ func GetChatHistory(userName string, sessionID string) ([]model.History, code.Co
 func ChatStreamSend(userName string, sessionID string, userQuestion string, modelType string, writer http.ResponseWriter) code.Code {
 
 	return StreamMessageToExistingSession(userName, sessionID, userQuestion, modelType, writer)
+}
+
+func DeleteSession(userName string, sessionID string) code.Code {
+	// 校验会话归属
+	session, err := daosession.GetSessionByID(sessionID)
+	if err != nil {
+		return code.CodeServerBusy
+	}
+	if session.UserName != userName {
+		return code.CodeInvalidParams
+	}
+
+	err = daosession.DeleteSessionByID(sessionID)
+	if err != nil {
+		return code.CodeServerBusy
+	}
+	return code.CodeSuccess
 }

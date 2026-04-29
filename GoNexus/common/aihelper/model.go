@@ -3,6 +3,7 @@ package aihelper
 import (
 	"GopherAI/common/rag"
 	"GopherAI/config"
+	"GopherAI/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -155,8 +156,11 @@ type AliRAGModel struct {
 }
 
 func NewAliRAGModel(ctx context.Context, username string) (*AliRAGModel, error) {
-	key := os.Getenv("OPENAI_API_KEY")
 	conf := config.GetConfig()
+	key := conf.RagModelConfig.RagApiKey
+	if key == "" {
+		key = os.Getenv("OPENAI_API_KEY")
+	}
 	modelName := conf.RagModelConfig.RagChatModelName
 	baseURL := conf.RagModelConfig.RagBaseUrl
 
@@ -225,28 +229,32 @@ func (o *AliRAGModel) GenerateResponse(ctx context.Context, messages []*schema.M
 	return resp, nil
 }
 
+
+
 func (o *AliRAGModel) StreamResponse(ctx context.Context, messages []*schema.Message, cb StreamCallback) (string, error) {
-	// 1. 创建 RAG 查询器
+	// 1. 提取用户最新问题
+	if len(messages) == 0 {
+		return "", fmt.Errorf("empty messages")
+	}
+	query := messages[len(messages)-1].Content
+
+	// 2. 创建 RAG 查询器
 	ragQuery, err := rag.NewRAGQuery(ctx, o.username)
 	if err != nil {
-		log.Printf("Failed to create RAG query (user may not have uploaded file): %v", err)
-		// 如果用户没有上传文件，直接使用原始问题
+		log.Printf("Failed to create RAG query: %v", err)
 		return o.streamWithoutRAG(ctx, messages, cb)
 	}
-
-	// 2. 获取用户最后一条消息作为查询
-	if len(messages) == 0 {
-		return "", fmt.Errorf("no messages provided")
-	}
-	lastMessage := messages[len(messages)-1]
-	query := lastMessage.Content
 
 	// 3. 检索相关文档
 	docs, err := ragQuery.RetrieveDocuments(ctx, query)
 	if err != nil {
 		log.Printf("Failed to retrieve documents: %v", err)
-		// 检索失败，使用原始问题
 		return o.streamWithoutRAG(ctx, messages, cb)
+	}
+
+	log.Printf("RAG Retrieved %d documents for query: %s", len(docs), query)
+	for i, doc := range docs {
+		log.Printf("  [Doc %d] ID: %s, Score: %v, Content Preview: %s", i, doc.ID, doc.MetaData["distance"], utils.TruncateString(doc.Content, 100))
 	}
 
 	// 4. 构建包含检索结果的提示词
@@ -286,7 +294,6 @@ func (o *AliRAGModel) StreamResponse(ctx context.Context, messages []*schema.Mes
 	return fullResp.String(), nil
 }
 
-// streamWithoutRAG 当没有 RAG 文档时的流式响应
 func (o *AliRAGModel) streamWithoutRAG(ctx context.Context, messages []*schema.Message, cb StreamCallback) (string, error) {
 	stream, err := o.llm.Stream(ctx, messages)
 	if err != nil {

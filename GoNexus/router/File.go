@@ -8,4 +8,5 @@ import (
 
 func FileRouter(r *gin.RouterGroup) {
 	r.POST("/upload", file.UploadRagFile)
+	r.DELETE("/knowledge", file.DeleteKnowledgeFile)
 }

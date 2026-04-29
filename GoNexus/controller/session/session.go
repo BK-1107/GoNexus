@@ -181,3 +181,16 @@ func ChatHistory(c *gin.Context) {
 	res.History = history
 	c.JSON(http.StatusOK, res)
 }
+
+func DeleteSession(c *gin.Context) {
+	sessionID := c.Param("id")
+	userName := c.GetString("userName")
+	
+	code_ := session.DeleteSession(userName, sessionID)
+	if code_ != code.CodeSuccess {
+		c.JSON(http.StatusOK, gin.H{"status_code": code_, "status_msg": "Delete failed"})
+		return
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"status_code": code.CodeSuccess, "status_msg": "Success"})
+}
