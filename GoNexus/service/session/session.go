@@ -5,6 +5,7 @@ import (
 	"GopherAI/common/code"
 	"GopherAI/config"
 	daosession "GopherAI/dao/session"
+	daomessage "GopherAI/dao/message"
 	"GopherAI/model"
 	"context"
 	"log"
@@ -171,21 +172,33 @@ func ChatSend(userName string, sessionID string, userQuestion string, modelType 
 }
 
 func GetChatHistory(userName string, sessionID string) ([]model.History, code.Code) {
-	// 获取AIHelper中的消息历史
+	// 1. 尝试从内存获取 (AIHelper)
 	manager := aihelper.GetGlobalManager()
 	helper, exists := manager.GetAIHelper(userName, sessionID)
-	if !exists {
-		return nil, code.CodeServerBusy
+	
+	var messages []*model.Message
+	if exists {
+		messages = helper.GetMessages()
 	}
 
-	messages := helper.GetMessages()
-	history := make([]model.History, 0, len(messages))
+	// 2. 如果内存中没有（或者重启后还没加载到内存），则从数据库加载
+	if len(messages) == 0 {
+		dbMsgs, err := daomessage.GetMessagesBySessionID(sessionID)
+		if err != nil {
+			log.Println("GetChatHistory DB error:", err)
+			return nil, code.CodeServerBusy
+		}
+		// 转换为指针切片以统一处理
+		for i := range dbMsgs {
+			messages = append(messages, &dbMsgs[i])
+		}
+	}
 
-	// 转换消息为历史格式（根据消息顺序或内容判断用户/AI消息）
-	for i, msg := range messages {
-		isUser := i%2 == 0
+	// 3. 转换消息为历史格式
+	history := make([]model.History, 0, len(messages))
+	for _, msg := range messages {
 		history = append(history, model.History{
-			IsUser:  isUser,
+			IsUser:  msg.IsUser,
 			Content: msg.Content,
 		})
 	}

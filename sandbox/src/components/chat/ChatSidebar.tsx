@@ -1,6 +1,6 @@
 import { MessageSquare, Plus, Settings, Home, LogOut, Trash2, Database, Zap } from "lucide-react"
 import { Link } from "react-router-dom"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useChatStore } from "@/store/chatStore"
 import { useAuthStore } from "@/store/authStore"
 import { chatApi } from "@/api/chat"
@@ -12,6 +12,7 @@ export function ChatSidebar() {
   
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteTitle, setDeleteTitle] = useState("")
+  const initialSyncRef = useRef(false)
 
   // 加载会话列表
   useEffect(() => {
@@ -34,18 +35,28 @@ export function ChatSidebar() {
     fetchSessions()
   }, [setSessions])
 
-  // [修复] 刷新后自动加载当前会话的历史记录
+  // [优化] 自动恢复/选中逻辑：处理新浏览器登录或刷新后 currentSessionId 为空的情况
   useEffect(() => {
-    if (currentSessionId && sessions.length > 0 && messages.length === 0) {
-      const selectedSession = sessions.find(s => s.id === currentSessionId)
-      if (selectedSession) {
-        console.log(`[Auto-Recover] Triggering history fetch for: ${currentSessionId}`)
+    const autoSelect = async () => {
+      // 1. 如果有 ID 但没同步过（刷新场景），执行静默同步
+      if (currentSessionId && !initialSyncRef.current) {
+        console.log(`[Auto-Sync] Fetching latest history for: ${currentSessionId}`)
         loadSessionHistory(currentSessionId)
-      } else {
-        console.warn(`[Auto-Recover] Session ${currentSessionId} not found in loaded sessions.`)
+        initialSyncRef.current = true
+        return
+      }
+
+      // 2. 如果没有 ID 但有会话列表（新登录场景），自动选中第一个
+      if (!currentSessionId && sessions.length > 0 && !initialSyncRef.current) {
+        const firstId = sessions[0].id
+        console.log(`[Auto-Select] No active session, picking most recent: ${firstId}`)
+        setCurrentSessionId(firstId)
+        loadSessionHistory(firstId)
+        initialSyncRef.current = true
       }
     }
-  }, [sessions, currentSessionId, messages.length])
+    autoSelect()
+  }, [sessions, currentSessionId])
 
   const loadSessionHistory = async (sessionId: string) => {
     try {
