@@ -15,16 +15,14 @@ services:
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
 
   redis:
-    image: redis:7.0
+    image: redis/redis-stack:latest
     container_name: gopherai_redis
     restart: always
     ports:
       - "6379:6379"
+      - "8001:8001" # RedisInsight 管理界面
     volumes:
       - redis_data:/data
-    # 开启 Redis 对 Vector 向量支持的模块（如果是标准镜像可能没有，如果有 RAG 需求建议使用 redis/redis-stack）
-    # 注：为了支持 RAG 的向量检索，推荐启动带有 RediSearch 模块特性的 Redis
-    # image: redis/redis-stack-server:latest
 
   rabbitmq:
     image: rabbitmq:3-management

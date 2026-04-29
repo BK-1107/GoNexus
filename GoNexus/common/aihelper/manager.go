@@ -32,8 +32,11 @@ func (m *AIHelperManager) GetOrCreateAIHelper(userName string, sessionID string,
 		m.helpers[userName] = userHelpers
 	}
 
+	// [修复] 缓存键增加 modelType，确保模式切换有效
+	cacheKey := sessionID + "_" + modelType
+
 	// 检查会话是否已存在
-	helper, exists := userHelpers[sessionID]
+	helper, exists := userHelpers[cacheKey]
 	if exists {
 		return helper, nil
 	}
@@ -45,7 +48,7 @@ func (m *AIHelperManager) GetOrCreateAIHelper(userName string, sessionID string,
 		return nil, err
 	}
 
-	userHelpers[sessionID] = helper
+	userHelpers[cacheKey] = helper
 	return helper, nil
 }
 

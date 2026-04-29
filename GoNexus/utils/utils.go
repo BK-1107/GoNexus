@@ -86,13 +86,32 @@ func RemoveAllFilesInDir(dir string) error {
 	return nil
 }
 
-// ValidateFile 校验文件是否为允许的文本文件（.md 或 .txt）
+// ValidateFile 校验文件是否为允许的文本文件（.md 或 .txt）或图片文件
 func ValidateFile(file *multipart.FileHeader) error {
-	// 校验文件扩展名
 	ext := strings.ToLower(filepath.Ext(file.Filename))
-	if ext != ".md" && ext != ".txt" {
-		return fmt.Errorf("文件类型不正确，只允许 .md 或 .txt 文件，当前扩展名: %s", ext)
+	
+	allowedExtensions := map[string]bool{
+		".md":   true,
+		".txt":  true,
+		".pdf":  true,
+		".doc":  true,
+		".docx": true,
+		".jpg":  true,
+		".jpeg": true,
+		".png":  true,
+		".webp": true,
+	}
+
+	if !allowedExtensions[ext] {
+		return fmt.Errorf("文件类型不正确，当前扩展名: %s (目前仅支持文本类 RAG 注入)", ext)
 	}
 
 	return nil
+}
+
+func TruncateString(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	return s[:n] + "..."
 }

@@ -13,7 +13,7 @@ type (
 	//这里的Username只能是账号登录，和我做的另一个项目有区别（邮箱账号均可)
 	LoginRequest struct {
 		Username string `json:"username"`
-		Password string `json:password`
+		Password string `json:"password"`
 	}
 	// omitempty当字段为空的时候，不返回这个东西
 	LoginResponse struct {

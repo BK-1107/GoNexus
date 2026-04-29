@@ -45,3 +45,24 @@ func UploadRagFile(c *gin.Context) {
 	res.FilePath = filePath
 	c.JSON(http.StatusOK, res)
 }
+
+func DeleteKnowledgeFile(c *gin.Context) {
+	res := new(controller.Response)
+	filename := c.Query("filename")
+	username := c.GetString("userName")
+
+	if filename == "" {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	err := file.DeleteKnowledgeFile(username, filename)
+	if err != nil {
+		log.Println("DeleteKnowledgeFile fail ", err)
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
+		return
+	}
+
+	res.Success()
+	c.JSON(http.StatusOK, res)
+}
