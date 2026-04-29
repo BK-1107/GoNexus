@@ -37,10 +37,56 @@ GoNexus/uploads/
 
 # Config and Secrets
 *.env
+*.env.local
+*.env.*.local
 GoNexus/config/config.toml
 config/*.toml
+.envrc
 
-# Executables
+# Executables and Installation Packages
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 main
 GoNexus/main
+*.msi
+*.msix
+*.appx
+*.pkg
+*.zip
+*.tar.gz
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Go specific
+/bin/
+/pkg/
+/src/
+vendor/
+
+# Node/Frontend specific
+.eslintcache
+.stylelintcache
+.cache/
+.npm/
+.yarn/
+*.tsbuildinfo
+
+# Build outputs in subdirectories
+**/dist/
+**/build/
+**/out/
+
+# Backup and Temporary files
+*~
+*.bak
+*.tmp
+*.temp
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
