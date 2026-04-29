@@ -30,7 +30,6 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific ignores
-sandbox/
 .agent/
 skill/
 uploads/
