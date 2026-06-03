@@ -63,6 +63,8 @@ GoNexus/main
 *.7z
 
 # Go specific
+.gocache/
+go.work.sum
 /bin/
 /pkg/
 /src/
