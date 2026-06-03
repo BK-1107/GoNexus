@@ -4,6 +4,7 @@ go 1.24.0
 
 toolchain go1.24.10
 
+// mod记录项目需要哪些依赖，以及版本，sum记录这些依赖的精确校验信息
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/cloudwego/eino v0.7.13
@@ -25,6 +26,7 @@ require (
 	gorm.io/gorm v1.31.1
 )
 
+//间接依赖
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect

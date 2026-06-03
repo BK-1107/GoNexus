@@ -8,6 +8,7 @@ import (
 
 func InitRouter() *gin.Engine {
 
+	//创建一个 Gin 的默认服务器对象。
 	r := gin.Default()
 	enterRouter := r.Group("/api/v1")
 	{

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// 注册用户相关的路由
 func RegisterUserRouter(r *gin.RouterGroup) {
 	{
 		r.POST("/register", user.Register)
@@ -13,10 +14,3 @@ func RegisterUserRouter(r *gin.RouterGroup) {
 		r.POST("/captcha", user.HandleCaptcha)
 	}
 }
-
-//你可以把它理解成一张“映射表”：
-// URL                → 处理函数
-//--------------------------------
-// /register          → Register
-// /login             → Login
-// /captcha           → HandleCaptcha
