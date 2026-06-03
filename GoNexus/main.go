@@ -1,13 +1,13 @@
 package main
 
 import (
-	"GopherAI/common/aihelper"
-	"GopherAI/common/mysql"
-	"GopherAI/common/rabbitmq"
-	"GopherAI/common/redis"
-	"GopherAI/config"
-	"GopherAI/dao/message"
-	"GopherAI/router"
+	"GoNexus/common/aihelper"
+	"GoNexus/common/mysql"
+	"GoNexus/common/rabbitmq"
+	"GoNexus/common/redis"
+	"GoNexus/config"
+	"GoNexus/dao/message"
+	"GoNexus/router"
 	"fmt"
 	"log"
 )

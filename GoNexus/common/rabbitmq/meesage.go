@@ -1,8 +1,8 @@
 package rabbitmq
 
 import (
-	"GopherAI/dao/message"
-	"GopherAI/model"
+	"GoNexus/dao/message"
+	"GoNexus/model"
 	"encoding/json"
 
 	"github.com/streadway/amqp"

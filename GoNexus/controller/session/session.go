@@ -1,10 +1,10 @@
 package session
 
 import (
-	"GopherAI/common/code"
-	"GopherAI/controller"
-	"GopherAI/model"
-	"GopherAI/service/session"
+	"GoNexus/common/code"
+	"GoNexus/controller"
+	"GoNexus/model"
+	"GoNexus/service/session"
 	"fmt"
 	"net/http"
 
@@ -154,7 +154,6 @@ func ChatStreamSend(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.Header("X-Accel-Buffering", "no") // 禁止代理缓存
 
-
 	code_ := session.ChatStreamSend(userName, req.SessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
 	if code_ != code.CodeSuccess {
 		c.SSEvent("error", gin.H{"message": "Failed to send message"})
@@ -185,12 +184,12 @@ func ChatHistory(c *gin.Context) {
 func DeleteSession(c *gin.Context) {
 	sessionID := c.Param("id")
 	userName := c.GetString("userName")
-	
+
 	code_ := session.DeleteSession(userName, sessionID)
 	if code_ != code.CodeSuccess {
 		c.JSON(http.StatusOK, gin.H{"status_code": code_, "status_msg": "Delete failed"})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{"status_code": code.CodeSuccess, "status_msg": "Success"})
 }

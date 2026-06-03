@@ -1,6 +1,6 @@
 package controller
 
-import "GopherAI/common/code"
+import "GoNexus/common/code"
 
 type Response struct {
 	StatusCode code.Code `json:"status_code"`

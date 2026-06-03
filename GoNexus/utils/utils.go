@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"GopherAI/model"
+	"GoNexus/model"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -89,7 +89,7 @@ func RemoveAllFilesInDir(dir string) error {
 // ValidateFile 校验文件是否为允许的文本文件（.md 或 .txt）或图片文件
 func ValidateFile(file *multipart.FileHeader) error {
 	ext := strings.ToLower(filepath.Ext(file.Filename))
-	
+
 	allowedExtensions := map[string]bool{
 		".md":   true,
 		".txt":  true,

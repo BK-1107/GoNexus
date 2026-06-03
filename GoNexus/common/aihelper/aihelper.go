@@ -1,9 +1,9 @@
 package aihelper
 
 import (
-	"GopherAI/common/rabbitmq"
-	"GopherAI/model"
-	"GopherAI/utils"
+	"GoNexus/common/rabbitmq"
+	"GoNexus/model"
+	"GoNexus/utils"
 	"context"
 	"sync"
 )

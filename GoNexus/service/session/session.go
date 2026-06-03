@@ -1,12 +1,12 @@
 package session
 
 import (
-	"GopherAI/common/aihelper"
-	"GopherAI/common/code"
-	"GopherAI/config"
-	daosession "GopherAI/dao/session"
-	daomessage "GopherAI/dao/message"
-	"GopherAI/model"
+	"GoNexus/common/aihelper"
+	"GoNexus/common/code"
+	"GoNexus/config"
+	daomessage "GoNexus/dao/message"
+	daosession "GoNexus/dao/session"
+	"GoNexus/model"
 	"context"
 	"log"
 	"net/http"
@@ -53,7 +53,7 @@ func CreateSessionAndSendMessage(userName string, userQuestion string, modelType
 	manager := aihelper.GetGlobalManager()
 	config_ := map[string]interface{}{
 		"apiKey":   config.GetConfig().RagApiKey,
-		"username": userName,       // 用于 RAG 模型获取用户文档
+		"username": userName, // 用于 RAG 模型获取用户文档
 	}
 	helper, err := manager.GetOrCreateAIHelper(userName, createdSession.ID, modelType, config_)
 	if err != nil {
@@ -96,7 +96,7 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 	manager := aihelper.GetGlobalManager()
 	config_ := map[string]interface{}{
 		"apiKey":   config.GetConfig().RagApiKey,
-		"username": userName,       // 用于 RAG 模型获取用户文档
+		"username": userName, // 用于 RAG 模型获取用户文档
 	}
 	helper, err := manager.GetOrCreateAIHelper(userName, sessionID, modelType, config_)
 	if err != nil {
@@ -175,7 +175,7 @@ func GetChatHistory(userName string, sessionID string) ([]model.History, code.Co
 	// 1. 尝试从内存获取 (AIHelper)
 	manager := aihelper.GetGlobalManager()
 	helper, exists := manager.GetAIHelper(userName, sessionID)
-	
+
 	var messages []*model.Message
 	if exists {
 		messages = helper.GetMessages()

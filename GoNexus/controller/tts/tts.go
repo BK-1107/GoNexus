@@ -1,9 +1,9 @@
 package tts
 
 import (
-	"GopherAI/common/code"
-	"GopherAI/common/tts"
-	"GopherAI/controller"
+	"GoNexus/common/code"
+	"GoNexus/common/tts"
+	"GoNexus/controller"
 	"log"
 	"net/http"
 

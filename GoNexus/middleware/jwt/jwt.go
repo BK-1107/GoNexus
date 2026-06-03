@@ -1,9 +1,9 @@
 package jwt
 
 import (
-	"GopherAI/common/code"
-	"GopherAI/controller"
-	"GopherAI/utils/myjwt"
+	"GoNexus/common/code"
+	"GoNexus/controller"
+	"GoNexus/utils/myjwt"
 	"log"
 	"net/http"
 	"strings"

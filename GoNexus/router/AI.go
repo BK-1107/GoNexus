@@ -1,8 +1,8 @@
 package router
 
 import (
-	"GopherAI/controller/session"
-	"GopherAI/controller/tts"
+	"GoNexus/controller/session"
+	"GoNexus/controller/tts"
 
 	"github.com/gin-gonic/gin"
 )

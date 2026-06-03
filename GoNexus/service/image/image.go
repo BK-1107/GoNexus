@@ -1,7 +1,7 @@
 package image
 
 import (
-	"GopherAI/config"
+	"GoNexus/config"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"

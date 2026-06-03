@@ -1,9 +1,9 @@
 package file
 
 import (
-	"GopherAI/common/code"
-	"GopherAI/controller"
-	"GopherAI/service/file"
+	"GoNexus/common/code"
+	"GoNexus/controller"
+	"GoNexus/service/file"
 	"log"
 	"net/http"
 

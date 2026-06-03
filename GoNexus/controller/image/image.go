@@ -1,9 +1,9 @@
 package image
 
 import (
-	"GopherAI/common/code"
-	"GopherAI/controller"
-	"GopherAI/service/image"
+	"GoNexus/common/code"
+	"GoNexus/controller"
+	"GoNexus/service/image"
 	"log"
 	"net/http"
 

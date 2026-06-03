@@ -1,13 +1,13 @@
 package user
 
 import (
-	"GopherAI/common/code"
-	myemail "GopherAI/common/email"
-	myredis "GopherAI/common/redis"
-	"GopherAI/dao/user"
-	"GopherAI/model"
-	"GopherAI/utils"
-	"GopherAI/utils/myjwt"
+	"GoNexus/common/code"
+	myemail "GoNexus/common/email"
+	myredis "GoNexus/common/redis"
+	"GoNexus/dao/user"
+	"GoNexus/model"
+	"GoNexus/utils"
+	"GoNexus/utils/myjwt"
 )
 
 func Login(username, password string) (string, code.Code) {

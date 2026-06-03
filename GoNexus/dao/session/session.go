@@ -1,8 +1,8 @@
 package session
 
 import (
-	"GopherAI/common/mysql"
-	"GopherAI/model"
+	"GoNexus/common/mysql"
+	"GoNexus/model"
 )
 
 func GetSessionsByUserName(UserName string) ([]model.Session, error) {

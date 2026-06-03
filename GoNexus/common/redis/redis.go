@@ -1,7 +1,7 @@
 package redis
 
 import (
-	"GopherAI/config"
+	"GoNexus/config"
 	"context"
 	"fmt"
 	"strconv"

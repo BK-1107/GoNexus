@@ -1,7 +1,7 @@
 package router
 
 import (
-	"GopherAI/middleware/jwt"
+	"GoNexus/middleware/jwt"
 
 	"github.com/gin-gonic/gin"
 )

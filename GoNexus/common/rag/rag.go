@@ -1,9 +1,9 @@
 package rag
 
 import (
-	"GopherAI/common/redis"
-	redisPkg "GopherAI/common/redis"
-	"GopherAI/config"
+	"GoNexus/common/redis"
+	redisPkg "GoNexus/common/redis"
+	"GoNexus/config"
 	"context"
 	"fmt"
 	"os"

@@ -1,9 +1,9 @@
 package file
 
 import (
-	"GopherAI/common/rag"
-	"GopherAI/config"
-	"GopherAI/utils"
+	"GoNexus/common/rag"
+	"GoNexus/config"
+	"GoNexus/utils"
 	"context"
 	"io"
 	"log"
@@ -99,7 +99,7 @@ func UploadRagFile(username string, file *multipart.FileHeader) (string, error) 
 
 func DeleteKnowledgeFile(username, filename string) error {
 	filePath := filepath.Join("uploads", username, filename)
-	
+
 	// 删除物理文件
 	if err := os.Remove(filePath); err != nil {
 		if !os.IsNotExist(err) {

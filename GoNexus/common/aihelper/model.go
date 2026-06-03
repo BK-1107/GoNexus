@@ -1,9 +1,9 @@
 package aihelper
 
 import (
-	"GopherAI/common/rag"
-	"GopherAI/config"
-	"GopherAI/utils"
+	"GoNexus/common/rag"
+	"GoNexus/config"
+	"GoNexus/utils"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -228,8 +228,6 @@ func (o *AliRAGModel) GenerateResponse(ctx context.Context, messages []*schema.M
 	}
 	return resp, nil
 }
-
-
 
 func (o *AliRAGModel) StreamResponse(ctx context.Context, messages []*schema.Message, cb StreamCallback) (string, error) {
 	// 1. 提取用户最新问题
