@@ -12,45 +12,55 @@ import (
 )
 
 type (
+	// 是查询当前用户所有聊天会话的响应结构，新盒子
 	GetUserSessionsResponse struct {
 		controller.Response
 		Sessions []model.SessionInfo `json:"sessions,omitempty"`
 	}
+
+	// 新建会话并发送第一条消息的请求结构。
 	CreateSessionAndSendMessageRequest struct {
-		UserQuestion string `json:"question" binding:"required"`  // 用户问题;
-		ModelType    string `json:"modelType" binding:"required"` // 模型类型;
+		UserQuestion string `json:"question" binding:"required"`  // 用户问题
+		ModelType    string `json:"modelType" binding:"required"` // 使用的模型类型
 	}
 
+	// 返回 AI 回复和新创建的会话 ID。
 	CreateSessionAndSendMessageResponse struct {
-		AiInformation string `json:"Information,omitempty"` // AI回答
-		SessionID     string `json:"sessionId,omitempty"`   // 当前会话ID
+		AiInformation string `json:"Information,omitempty"` // AI 回复内容
+		SessionID     string `json:"sessionId,omitempty"`   // 当前会话 ID
 		controller.Response
 	}
 
+	// 向已有会话发送消息的请求结构。
 	ChatSendRequest struct {
-		UserQuestion string `json:"question" binding:"required"`            // 用户问题;
-		ModelType    string `json:"modelType" binding:"required"`           // 模型类型;
-		SessionID    string `json:"sessionId,omitempty" binding:"required"` // 当前会话ID
+		UserQuestion string `json:"question" binding:"required"`            // 用户问题
+		ModelType    string `json:"modelType" binding:"required"`           // 使用的模型类型
+		SessionID    string `json:"sessionId,omitempty" binding:"required"` // 当前会话 ID
 	}
 
+	// 普通非流式聊天接口的响应结构。
 	ChatSendResponse struct {
-		AiInformation string `json:"Information,omitempty"` // AI回答
+		AiInformation string `json:"Information,omitempty"` // AI 回复内容
 		controller.Response
 	}
 
+	// 查询某个会话历史记录的请求结构。
 	ChatHistoryRequest struct {
-		SessionID string `json:"sessionId,omitempty" binding:"required"` // 当前会话ID
+		SessionID string `json:"sessionId,omitempty" binding:"required"` // 当前会话 ID
 	}
+
+	// 返回当前会话的历史消息列表。
 	ChatHistoryResponse struct {
 		History []model.History `json:"history"`
 		controller.Response
 	}
 )
 
+// 查询当前登录用户的所有聊天会话。
 func GetUserSessionsByUserName(c *gin.Context) {
 	res := new(GetUserSessionsResponse)
-	userName := c.GetString("userName") // From JWT middleware
-
+	userName := c.GetString("userName") // 来自 JWT 中间件
+	// 调用 service 层查询会话列表，根据 userName 从数据库查询。
 	userSessions, err := session.GetUserSessionsByUserName(userName)
 	if err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
@@ -62,55 +72,60 @@ func GetUserSessionsByUserName(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// 创建新会话，并在该会话中发送第一条用户消息。
+// controller 层负责参数绑定和响应包装，具体创建会话和调用 AI 的逻辑在 service 层。
 func CreateSessionAndSendMessage(c *gin.Context) {
 	req := new(CreateSessionAndSendMessageRequest)
 	res := new(CreateSessionAndSendMessageResponse)
-	userName := c.GetString("userName") // From JWT middleware
+
+	userName := c.GetString("userName")
+	// 参数绑定，确保前端传了 question 和 modelType。
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
 		return
 	}
-	//内部会创建会话并发送消息，并会将AI回答、当前会话返回
-	session_id, aiInformation, code_ := session.CreateSessionAndSendMessage(userName, req.UserQuestion, req.ModelType)
-
+	// 调用 service 层创建会话并发送消息，得到 AI 回复和新会话 ID。
+	sessionID, aiInformation, code_ := session.CreateSessionAndSendMessage(userName, req.UserQuestion, req.ModelType)
 	if code_ != code.CodeSuccess {
 		c.JSON(http.StatusOK, res.CodeOf(code_))
 		return
 	}
-
 	res.Success()
 	res.AiInformation = aiInformation
-	res.SessionID = session_id
+	res.SessionID = sessionID
 	c.JSON(http.StatusOK, res)
 }
 
+// 创建新会话，并通过 SSE 流式返回 AI 回复。
+// 它会先把 sessionId 推给前端，让前端可以立即显示新会话，再继续推送 AI 输出内容。
 func CreateStreamSessionAndSendMessage(c *gin.Context) {
 	req := new(CreateSessionAndSendMessageRequest)
-	userName := c.GetString("userName") // From JWT middleware
+	userName := c.GetString("userName") 
+
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": "Invalid parameters"})
 		return
 	}
 
-	// 设置SSE头
+	// 设置 SSE 响应头，告诉客户端这是一个持续输出的事件流。
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
 	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("X-Accel-Buffering", "no") // 禁止代理缓存
+	c.Header("X-Accel-Buffering", "no")
 
-	// 先创建会话并立即把 sessionId 下发给前端，随后再开始流式输出
+	// 先创建会话，保证前端可以立刻拿到 sessionId。
 	sessionID, code_ := session.CreateStreamSessionOnly(userName, req.UserQuestion)
 	if code_ != code.CodeSuccess {
 		c.SSEvent("error", gin.H{"message": "Failed to create session"})
 		return
 	}
 
-	// 先把 sessionId 通过 data 事件发送给前端，前端据此绑定当前会话，侧边栏即可出现新标签
+	// 先把 sessionId 下发给前端，前端可以据此绑定当前新会话。
 	c.Writer.WriteString(fmt.Sprintf("data: {\"sessionId\": \"%s\"}\n\n", sessionID))
 	c.Writer.Flush()
 
-	// 然后开始把本次回答进行流式发送（包含最后的 [DONE]）
+	// 再开始把本次 AI 回复按 SSE 流式输出。
 	code_ = session.StreamMessageToExistingSession(userName, sessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
 	if code_ != code.CodeSuccess {
 		c.SSEvent("error", gin.H{"message": "Failed to send message"})
@@ -118,58 +133,63 @@ func CreateStreamSessionAndSendMessage(c *gin.Context) {
 	}
 }
 
+// ChatSend 向已有会话发送一条普通消息，并一次性返回 AI 回复。
 func ChatSend(c *gin.Context) {
 	req := new(ChatSendRequest)
 	res := new(ChatSendResponse)
-	userName := c.GetString("userName") // From JWT middleware
+	userName := c.GetString("userName") 
+
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
 		return
 	}
-	// 发送消息，并会将AI回答返回
+	// 调用 service 层处理消息发送和 AI 回复，得到 AI 回复内容。
 	aiInformation, code_ := session.ChatSend(userName, req.SessionID, req.UserQuestion, req.ModelType)
-
 	if code_ != code.CodeSuccess {
 		c.JSON(http.StatusOK, res.CodeOf(code_))
 		return
 	}
-
+	// 返回 AI 回复给前端，前端可以更新界面显示 AI 回复内容。
 	res.Success()
 	res.AiInformation = aiInformation
 	c.JSON(http.StatusOK, res)
 }
 
+// ChatStreamSend 向已有会话发送消息，并通过 SSE 流式返回 AI 回复。
 func ChatStreamSend(c *gin.Context) {
 	req := new(ChatSendRequest)
-	userName := c.GetString("userName") // From JWT middleware
+	userName := c.GetString("userName") // 来自 JWT 中间件
+
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": "Invalid parameters"})
 		return
 	}
 
-	// 设置SSE头
+	// 设置 SSE 响应头，避免代理缓存并保持连接不断开。
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 	c.Header("Connection", "keep-alive")
 	c.Header("Access-Control-Allow-Origin", "*")
-	c.Header("X-Accel-Buffering", "no") // 禁止代理缓存
-
+	c.Header("X-Accel-Buffering", "no")
+	// 调用 service 层处理消息发送和 AI 回复，AI 回复会通过 http.ResponseWriter 以 SSE 形式持续输出。
 	code_ := session.ChatStreamSend(userName, req.SessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
 	if code_ != code.CodeSuccess {
 		c.SSEvent("error", gin.H{"message": "Failed to send message"})
 		return
 	}
-
 }
 
+// ChatHistory 查询当前用户指定会话的历史聊天记录。
 func ChatHistory(c *gin.Context) {
 	req := new(ChatHistoryRequest)
 	res := new(ChatHistoryResponse)
-	userName := c.GetString("userName") // From JWT middleware
+	userName := c.GetString("userName") 
+
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
 		return
 	}
+	// 调用 service 层查询历史记录，service 层会校验会话是否属于当前用户。
 	history, code_ := session.GetChatHistory(userName, req.SessionID)
 	if code_ != code.CodeSuccess {
 		c.JSON(http.StatusOK, res.CodeOf(code_))
@@ -181,10 +201,12 @@ func ChatHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+
+// DeleteSession 删除当前用户的指定会话。
 func DeleteSession(c *gin.Context) {
 	sessionID := c.Param("id")
 	userName := c.GetString("userName")
-
+	// 调用 service 层删除会话，service 层会校验会话是否属于当前用户。
 	code_ := session.DeleteSession(userName, sessionID)
 	if code_ != code.CodeSuccess {
 		c.JSON(http.StatusOK, gin.H{"status_code": code_, "status_msg": "Delete failed"})
