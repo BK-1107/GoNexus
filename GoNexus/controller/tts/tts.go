@@ -85,7 +85,7 @@ func QueryTTSTask(c *gin.Context) {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
 		return
 	}
-
+	// 查询 TTS 任务状态和结果，service 层会调用第三方 TTS 服务的查询接口。
 	TTSQueryResponse, err := tts.ttsService.QueryTTSFull(c, taskID)
 	if err != nil {
 		log.Println("语音合成失败", err.Error())

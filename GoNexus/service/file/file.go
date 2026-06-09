@@ -2,7 +2,6 @@ package file
 
 import (
 	"GoNexus/common/rag"
-	"GoNexus/config"
 	"GoNexus/utils"
 	"context"
 	"io"
@@ -29,8 +28,8 @@ func UploadRagFile(username string, file *multipart.FileHeader) (string, error) 
 	}
 
 	// [优化] 不再删除旧文件，支持多文档 RAG
-	// 使用统一的 IndexID: "kb_" + username
-	indexID := "kb_" + username
+	// 使用统一的用户知识库索引 ID，确保上传和聊天检索查询同一个 Redis 索引。
+	indexID := rag.UserKnowledgeIndexID(username)
 
 	// 生成UUID作为唯一文件名
 	uuid := utils.GenerateUUID()
@@ -76,7 +75,7 @@ func UploadRagFile(username string, file *multipart.FileHeader) (string, error) 
 	}
 
 	// 创建 RAG 索引器并对文件进行向量化
-	indexer, err := rag.NewRAGIndexer(indexID, config.GetConfig().RagModelConfig.RagEmbeddingModel)
+	indexer, err := rag.NewRAGIndexer(indexID)
 	if err != nil {
 		log.Printf("Failed to create RAG indexer: %v", err)
 		// 删除已上传的文件
@@ -100,13 +99,12 @@ func UploadRagFile(username string, file *multipart.FileHeader) (string, error) 
 func DeleteKnowledgeFile(username, filename string) error {
 	filePath := filepath.Join("uploads", username, filename)
 
-	// 删除物理文件
+	// 删除文件
 	if err := os.Remove(filePath); err != nil {
 		if !os.IsNotExist(err) {
 			return err
 		}
 	}
-
 	log.Printf("Knowledge file deleted: %s/%s", username, filename)
 	return nil
 }

@@ -41,7 +41,7 @@ go run main.go
 ```
 
 ### 3. Frontend Setup
-1. Navigate to the `sandbox` directory.
+1. Navigate to the `GoNexus/frontend` directory.
 2. Install dependencies and start the development server:
 ```bash
 npm install

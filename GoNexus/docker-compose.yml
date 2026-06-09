@@ -32,7 +32,7 @@ services:
       RABBITMQ_DEFAULT_USER: root
       RABBITMQ_DEFAULT_PASS: 123456
     ports:
-      - "5672:5672"   # 消息队列端口
+      - "5672:5672" # 消息队列端口
       - "15672:15672" # RabbitMQ 管理后台网页端跨口 (用户名 root 密码 123456)
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq

@@ -13,7 +13,7 @@ After cloning the repository, you need to set up the environment manually as som
 
 ### Dependencies
 - **Go Backend**: Run `go mod tidy` in the `GoNexus` folder.
-- **React Frontend**: Run `npm install` in the `sandbox` folder.
+- **React Frontend**: Run `npm install` in the `GoNexus/frontend` folder.
 
 ### Infrastructure
 Start the required databases and services using Docker:

@@ -1,11 +1,11 @@
 # Dependencies
 node_modules/
-GoNexus/vue-frontend/node_modules/
+GoNexus/frontend/node_modules/
 
 # Production builds
 dist/
 build/
-GoNexus/vue-frontend/dist/
+GoNexus/frontend/dist/
 
 # Log files
 *.log

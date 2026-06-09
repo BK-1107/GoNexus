@@ -69,10 +69,7 @@ func Register(email, password, captcha string) (string, code.Code) {
 	return token, code.CodeSuccess
 }
 
-// 往指定邮箱发送验证码
-// 分为以下任务：
-// 1：先存放redis
-// 2：再进行远程发送
+// 往指定邮箱发送验证码1：先存放redis  2：再进行远程发送
 func SendCaptcha(email_ string) code.Code {
 	send_code := utils.GetRandomNumbers(6)
 	//1:先存放到redis
