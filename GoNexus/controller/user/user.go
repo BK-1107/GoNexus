@@ -28,8 +28,8 @@ type (
 	// 注册流程需要邮箱、邮箱验证码和密码。
 	RegisterRequest struct {
 		Email    string `json:"email" binding:"required"`
-		Captcha  string `json:"captcha"`
-		Password string `json:"password"`
+		Captcha  string `json:"captcha" binding:"required"`
+		Password string `json:"password" binding:"required"`
 	}
 
 	// RegisterResponse 是注册接口的响应结构。
@@ -46,6 +46,14 @@ type (
 
 	// CaptchaResponse 是发送验证码接口的统一响应结构。
 	CaptchaResponse struct {
+		controller.Response
+	}
+
+	CheckInviteRequest struct {
+		InviteCode string `json:"inviteCode" binding:"required"`
+	}
+
+	CheckInviteResponse struct {
 		controller.Response
 	}
 )
@@ -107,6 +115,24 @@ func HandleCaptcha(c *gin.Context) {
 	// 调用 service 层生成验证码、存储 Redis 和发送邮件。
 	code_ := user.SendCaptcha(req.Email)
 	if code_ != code.CodeSuccess {
+		c.JSON(http.StatusOK, res.CodeOf(code_))
+		return
+	}
+
+	res.Success()
+	c.JSON(http.StatusOK, res)
+}
+
+func CheckInvite(c *gin.Context) {
+	req := new(CheckInviteRequest)
+	res := new(CheckInviteResponse)
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	if code_ := user.CheckInviteCode(req.InviteCode); code_ != code.CodeSuccess {
 		c.JSON(http.StatusOK, res.CodeOf(code_))
 		return
 	}

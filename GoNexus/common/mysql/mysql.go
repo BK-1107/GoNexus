@@ -3,6 +3,7 @@ package mysql
 import (
 	"GoNexus/config"
 	"GoNexus/model"
+	"GoNexus/utils"
 	"fmt"
 	"time"
 
@@ -60,11 +61,38 @@ func InitMysql() error {
 }
 
 func migration() error {
-	return DB.AutoMigrate(
+	if err := DB.AutoMigrate(
 		new(model.User),
 		new(model.Session),
 		new(model.Message),
-	)
+	); err != nil {
+		return err
+	}
+
+	return seedDefaultUser()
+}
+
+func seedDefaultUser() error {
+	defaultUsername := config.GetConfig().GetDefaultUsername()
+	defaultPassword := config.GetConfig().GetDefaultPassword()
+	if defaultUsername == "" || defaultPassword == "" {
+		return nil
+	}
+
+	var user model.User
+	err := DB.Where("username = ?", defaultUsername).First(&user).Error
+	if err == nil {
+		return nil
+	}
+	if err != gorm.ErrRecordNotFound {
+		return err
+	}
+
+	return DB.Create(&model.User{
+		Name:     defaultUsername,
+		Username: defaultUsername,
+		Password: utils.MD5(defaultPassword),
+	}).Error
 }
 
 func InsertUser(user *model.User) (*model.User, error) {

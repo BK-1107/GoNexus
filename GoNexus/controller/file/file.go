@@ -6,6 +6,7 @@ import (
 	"GoNexus/service/file"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,6 +41,12 @@ func UploadRagFile(c *gin.Context) {
 	filePath, err := file.UploadRagFile(username, uploadedFile)
 	if err != nil {
 		log.Println("UploadFile fail ", err)
+		if strings.Contains(err.Error(), "RAG upload only supports") || strings.Contains(err.Error(), "file is empty") {
+			res.CodeOf(code.CodeInvalidParams)
+			res.StatusMsg = err.Error()
+			c.JSON(http.StatusOK, res)
+			return
+		}
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
 		return
 	}

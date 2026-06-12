@@ -127,7 +127,7 @@ export function KnowledgeBase() {
             ref={fileInputRef} 
             onChange={handleFileChange} 
             className="hidden" 
-            accept=".txt,.md,.pdf,.doc,.docx"
+            accept=".txt,.md"
           />
 
           <div 
@@ -149,7 +149,7 @@ export function KnowledgeBase() {
               <>
                 <Upload size={48} className="mb-2 group-hover:scale-110 transition-transform" />
                 <p className="font-black uppercase">Click to Select Doc</p>
-                <p className="text-[10px] font-bold opacity-40 uppercase mt-2">Support: TXT, MD, PDF</p>
+                <p className="text-[10px] font-bold opacity-40 uppercase mt-2">Support: TXT, MD</p>
               </>
             )}
           </div>

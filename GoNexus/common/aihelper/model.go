@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/cloudwego/eino-ext/components/model/ollama"
@@ -37,18 +36,9 @@ type OpenAIModel struct {
 
 func NewOpenAIModel(ctx context.Context) (*OpenAIModel, error) {
 	conf := config.GetConfig()
-	key := conf.RagModelConfig.RagApiKey
-	if key == "" {
-		key = os.Getenv("OPENAI_API_KEY")
-	}
-	modelName := os.Getenv("OPENAI_MODEL_NAME")
-	if modelName == "" {
-		modelName = conf.RagModelConfig.RagChatModelName
-	}
-	baseURL := os.Getenv("OPENAI_BASE_URL")
-	if baseURL == "" {
-		baseURL = conf.RagModelConfig.RagBaseUrl
-	}
+	key := conf.GetLLMAPIKey()
+	modelName := conf.GetLLMModelID()
+	baseURL := conf.GetLLMBaseURL()
 
 	llm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		BaseURL: baseURL,
@@ -157,12 +147,9 @@ type AliRAGModel struct {
 
 func NewAliRAGModel(ctx context.Context, username string) (*AliRAGModel, error) {
 	conf := config.GetConfig()
-	key := conf.RagModelConfig.RagApiKey
-	if key == "" {
-		key = os.Getenv("OPENAI_API_KEY")
-	}
-	modelName := conf.RagModelConfig.RagChatModelName
-	baseURL := conf.RagModelConfig.RagBaseUrl
+	key := conf.GetLLMAPIKey()
+	modelName := conf.GetLLMModelID()
+	baseURL := conf.GetLLMBaseURL()
 
 	llm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		BaseURL: baseURL,
@@ -332,10 +319,10 @@ type MCPModel struct {
 
 // NewMCPModel 创建MCP模型实例
 func NewMCPModel(ctx context.Context, username string) (*MCPModel, error) {
-	key := os.Getenv("OPENAI_API_KEY")
 	conf := config.GetConfig()
-	modelName := conf.RagModelConfig.RagChatModelName
-	baseURL := conf.RagModelConfig.RagBaseUrl
+	key := conf.GetLLMAPIKey()
+	modelName := conf.GetLLMModelID()
+	baseURL := conf.GetLLMBaseURL()
 
 	// 创建LLM
 	llm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{

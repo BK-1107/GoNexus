@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 
 	"github.com/BurntSushi/toml"
 )
@@ -62,6 +63,15 @@ type VoiceServiceConfig struct {
 	VoiceServiceSecretKey string `toml:"voiceServiceSecretKey"`
 }
 
+type RegisterConfig struct {
+	Secret string `toml:"secret"`
+}
+
+type DefaultUserConfig struct {
+	Username string `toml:"username"`
+	Password string `toml:"password"`
+}
+
 type Config struct {
 	EmailConfig        `toml:"emailConfig"`
 	RedisConfig        `toml:"redisConfig"`
@@ -71,6 +81,8 @@ type Config struct {
 	Rabbitmq           `toml:"rabbitmqConfig"`
 	RagModelConfig     `toml:"ragModelConfig"`
 	VoiceServiceConfig `toml:"voiceServiceConfig"`
+	RegisterConfig     `toml:"registerConfig"`
+	DefaultUserConfig  `toml:"defaultUserConfig"`
 }
 
 type RedisKeyConfig struct {
@@ -103,4 +115,55 @@ func GetConfig() *Config {
 		_ = InitConfig()
 	}
 	return config
+}
+
+func (c *Config) GetRegisterSecret() string {
+	if secret := os.Getenv("GONEXUS_REGISTER_SECRET"); secret != "" {
+		return secret
+	}
+	return c.RegisterConfig.Secret
+}
+
+func (c *Config) GetDefaultUsername() string {
+	if username := os.Getenv("GONEXUS_DEFAULT_USERNAME"); username != "" {
+		return username
+	}
+	return c.DefaultUserConfig.Username
+}
+
+func (c *Config) GetDefaultPassword() string {
+	if password := os.Getenv("GONEXUS_DEFAULT_PASSWORD"); password != "" {
+		return password
+	}
+	return c.DefaultUserConfig.Password
+}
+
+func (c *Config) GetLLMAPIKey() string {
+	if key := os.Getenv("LLM_API_KEY"); key != "" {
+		return key
+	}
+	if key := os.Getenv("OPENAI_API_KEY"); key != "" {
+		return key
+	}
+	return c.RagModelConfig.RagApiKey
+}
+
+func (c *Config) GetLLMModelID() string {
+	if modelID := os.Getenv("LLM_MODEL_ID"); modelID != "" {
+		return modelID
+	}
+	if modelID := os.Getenv("OPENAI_MODEL_NAME"); modelID != "" {
+		return modelID
+	}
+	return c.RagModelConfig.RagChatModelName
+}
+
+func (c *Config) GetLLMBaseURL() string {
+	if baseURL := os.Getenv("LLM_BASE_URL"); baseURL != "" {
+		return baseURL
+	}
+	if baseURL := os.Getenv("OPENAI_BASE_URL"); baseURL != "" {
+		return baseURL
+	}
+	return c.RagModelConfig.RagBaseUrl
 }

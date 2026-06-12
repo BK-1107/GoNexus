@@ -14,7 +14,6 @@ import (
 	"strings"
 )
 
-// OpenAICompatibleVisionRequest 定义视觉大模型请求体结构
 type OpenAICompatibleVisionRequest struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
@@ -35,7 +34,6 @@ type ImageURL struct {
 	URL string `json:"url"`
 }
 
-// 响应结构体
 type AIResponse struct {
 	Choices []struct {
 		Message struct {
@@ -47,11 +45,9 @@ type AIResponse struct {
 	} `json:"error"`
 }
 
-// RecognizeImage 后端图像内容分析逻辑（使用多模态大模型）
 func RecognizeImage(file *multipart.FileHeader) (string, error) {
 	log.Printf("[Backend] Starting AI Vision analysis for: %s", file.Filename)
 
-	// 1. 读取图片文件并转换为 Base64
 	src, err := file.Open()
 	if err != nil {
 		return "", fmt.Errorf("failed to open image: %v", err)
@@ -71,20 +67,18 @@ func RecognizeImage(file *multipart.FileHeader) (string, error) {
 		mimeType = "image/webp"
 	}
 
-	base64Str := base64.StdEncoding.EncodeToString(imgData)
-	dataURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64Str)
+	dataURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(imgData))
 
-	// 2. 获取配置
 	conf := config.GetConfig()
-	apiKey := conf.RagModelConfig.RagApiKey
-	baseURL := conf.RagModelConfig.RagBaseUrl
-	if apiKey == "" || baseURL == "" {
-		return "", fmt.Errorf("AI API Key or Base URL is missing in config")
+	apiKey := conf.GetLLMAPIKey()
+	baseURL := conf.GetLLMBaseURL()
+	modelID := conf.GetLLMModelID()
+	if apiKey == "" || baseURL == "" || modelID == "" {
+		return "", fmt.Errorf("AI API key, base URL, or model ID is missing in config")
 	}
 
-	// 3. 构建请求 Payload
 	reqBody := OpenAICompatibleVisionRequest{
-		Model: "qwen-vl-plus", // 默认使用百炼的 vl-plus 模型
+		Model: modelID,
 		Messages: []Message{
 			{
 				Role: "user",
@@ -109,7 +103,6 @@ func RecognizeImage(file *multipart.FileHeader) (string, error) {
 		return "", fmt.Errorf("failed to marshal JSON payload: %v", err)
 	}
 
-	// 4. 发送 HTTP 请求
 	apiEndpoint := strings.TrimRight(baseURL, "/") + "/chat/completions"
 	req, err := http.NewRequest("POST", apiEndpoint, bytes.NewBuffer(jsonPayload))
 	if err != nil {
@@ -119,8 +112,7 @@ func RecognizeImage(file *multipart.FileHeader) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to call AI Vision API: %v", err)
 	}
@@ -131,7 +123,6 @@ func RecognizeImage(file *multipart.FileHeader) (string, error) {
 		return "", fmt.Errorf("failed to read API response: %v", err)
 	}
 
-	// 5. 解析返回结果
 	var aiResp AIResponse
 	if err := json.Unmarshal(respBody, &aiResp); err != nil {
 		log.Printf("Raw API Response: %s", string(respBody))

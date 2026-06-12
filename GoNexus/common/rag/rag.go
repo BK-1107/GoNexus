@@ -42,13 +42,9 @@ type RAGQuery struct {
 // API 配置优先来自 config.toml，如果 apiKey 为空，则尝试读取环境变量 OPENAI_API_KEY。
 func NewRAGEmbedder(ctx context.Context) (embedding.Embedder, error) {
 	cfg := config.GetConfig()
-	apiKey := cfg.RagModelConfig.RagApiKey
-	if apiKey == "" {
-		apiKey = os.Getenv("OPENAI_API_KEY")
-	}
 	return openai.NewEmbedder(ctx, &openai.EmbeddingConfig{
-		BaseURL: cfg.RagModelConfig.RagBaseUrl,
-		APIKey:  apiKey,
+		BaseURL: cfg.GetLLMBaseURL(),
+		APIKey:  cfg.GetLLMAPIKey(),
 		Model:   cfg.RagModelConfig.RagEmbeddingModel,
 	})
 }
