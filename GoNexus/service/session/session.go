@@ -10,6 +10,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -52,7 +53,7 @@ func CreateSessionAndSendMessage(userName string, userQuestion string, modelType
 	//2：获取AIHelper并通过其管理消息
 	manager := aihelper.GetGlobalManager()
 	config_ := map[string]interface{}{
-		"apiKey":   config.GetConfig().RagApiKey,
+		"apiKey":   config.GetConfig().GetLLMAPIKey(),
 		"username": userName, // 用于 RAG 模型获取用户文档
 	}
 	helper, err := manager.GetOrCreateAIHelper(userName, createdSession.ID, modelType, config_)
@@ -86,6 +87,9 @@ func CreateStreamSessionOnly(userName string, userQuestion string) (string, code
 }
 
 func StreamMessageToExistingSession(userName string, sessionID string, userQuestion string, modelType string, writer http.ResponseWriter) code.Code {
+	start := time.Now()
+	log.Printf("StreamMessageToExistingSession start: user=%s session=%s modelType=%s questionLen=%d", userName, sessionID, modelType, len(userQuestion))
+
 	// 确保 writer 支持 Flush
 	flusher, ok := writer.(http.Flusher)
 	if !ok {
@@ -95,7 +99,7 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 
 	manager := aihelper.GetGlobalManager()
 	config_ := map[string]interface{}{
-		"apiKey":   config.GetConfig().RagApiKey,
+		"apiKey":   config.GetConfig().GetLLMAPIKey(),
 		"username": userName, // 用于 RAG 模型获取用户文档
 	}
 	helper, err := manager.GetOrCreateAIHelper(userName, sessionID, modelType, config_)
@@ -119,7 +123,7 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 
 	_, err_ := helper.StreamResponse(userName, ctx, cb, userQuestion)
 	if err_ != nil {
-		log.Println("StreamMessageToExistingSession StreamResponse error:", err_)
+		log.Printf("StreamMessageToExistingSession StreamResponse error after %s: %v", time.Since(start), err_)
 		return code.AIModelFail
 	}
 
@@ -130,6 +134,7 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 	}
 	flusher.Flush()
 
+	log.Printf("StreamMessageToExistingSession done after %s", time.Since(start))
 	return code.CodeSuccess
 }
 

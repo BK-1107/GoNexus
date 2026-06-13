@@ -8,8 +8,9 @@ After cloning the repository, you need to set up the environment manually as som
 
 ### Configuration
 1.  Navigate to `GoNexus/config/`.
-2.  Create a `config.toml` file.
-3.  Fill in your `RagApiKey`, MySQL database password, and Redis/RabbitMQ connection details.
+2.  Copy `config.example.toml` to `config.toml`.
+3.  Fill in your API keys, MySQL database password, and Redis/RabbitMQ connection details.
+4.  Keep `config.toml` local only. For AWS deployment, inject secrets with environment variables or AWS SSM / Secrets Manager instead of committing them.
 
 ### Dependencies
 - **Go Backend**: Run `go mod tidy` in the `GoNexus` folder.

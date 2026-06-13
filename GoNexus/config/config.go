@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/BurntSushi/toml"
 )
@@ -15,7 +16,7 @@ type MainConfig struct {
 
 type EmailConfig struct {
 	Authcode string `toml:"authcode"`
-	Email    string `toml:"email" `
+	Email    string `toml:"email"`
 }
 
 type RedisConfig struct {
@@ -85,6 +86,7 @@ type Config struct {
 	DefaultUserConfig  `toml:"defaultUserConfig"`
 }
 
+// RedisKeyConfig 定义验证码和 RAG 索引用到的 Redis key 命名规则。
 type RedisKeyConfig struct {
 	CaptchaPrefix   string
 	IndexName       string
@@ -99,16 +101,114 @@ var DefaultRedisKeyConfig = RedisKeyConfig{
 
 var config *Config
 
-// InitConfig 初始化项目配置
-func InitConfig() error {
-	// 设置配置文件路径（相对于 main.go 所在的目录）
-	if _, err := toml.DecodeFile("config/config.toml", config); err != nil {
-		log.Fatal(err.Error())
-		return err
+// setStringFromEnv 在环境变量存在时覆盖字符串配置。
+// 空值会被忽略，这样本地开发时仍然可以使用 config.toml 中的默认值。
+func setStringFromEnv(target *string, key string) {
+	if value := os.Getenv(key); value != "" {
+		*target = value
 	}
+}
+
+// setIntFromEnv 在环境变量存在时覆盖整数配置；解析失败时保留原值。
+func setIntFromEnv(target *int, key string) {
+	value := os.Getenv(key)
+	if value == "" {
+		return
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil {
+		log.Printf("invalid integer for %s: %v", key, err)
+		return
+	}
+	*target = parsed
+}
+
+// applyEnvOverrides 用于生产部署时从环境变量覆盖配置。
+// 在 AWS ECS 中，这些值可以来自 task environment、SSM Parameter Store 或 Secrets Manager。
+// 本地开发仍然保留 config.toml 作为默认配置来源。
+func applyEnvOverrides(c *Config) {
+	// HTTP 服务配置。
+	setStringFromEnv(&c.MainConfig.Host, "GONEXUS_HOST")
+	setIntFromEnv(&c.MainConfig.Port, "GONEXUS_PORT")
+	setStringFromEnv(&c.MainConfig.AppName, "GONEXUS_APP_NAME")
+
+	// 邮箱验证码使用的 SMTP 配置。
+	setStringFromEnv(&c.EmailConfig.Email, "GONEXUS_EMAIL")
+	setStringFromEnv(&c.EmailConfig.Authcode, "GONEXUS_EMAIL_AUTHCODE")
+
+	// Redis / Redis Stack 配置。
+	setStringFromEnv(&c.RedisConfig.RedisHost, "GONEXUS_REDIS_HOST")
+	setIntFromEnv(&c.RedisConfig.RedisPort, "GONEXUS_REDIS_PORT")
+	setIntFromEnv(&c.RedisConfig.RedisDb, "GONEXUS_REDIS_DB")
+	setStringFromEnv(&c.RedisConfig.RedisPassword, "GONEXUS_REDIS_PASSWORD")
+
+	// MySQL 配置。在 AWS 中通常指向 RDS endpoint。
+	setStringFromEnv(&c.MysqlConfig.MysqlHost, "GONEXUS_MYSQL_HOST")
+	setIntFromEnv(&c.MysqlConfig.MysqlPort, "GONEXUS_MYSQL_PORT")
+	setStringFromEnv(&c.MysqlConfig.MysqlUser, "GONEXUS_MYSQL_USER")
+	setStringFromEnv(&c.MysqlConfig.MysqlPassword, "GONEXUS_MYSQL_PASSWORD")
+	setStringFromEnv(&c.MysqlConfig.MysqlDatabaseName, "GONEXUS_MYSQL_DATABASE")
+	setStringFromEnv(&c.MysqlConfig.MysqlCharset, "GONEXUS_MYSQL_CHARSET")
+
+	// JWT 签名密钥和 token 元数据配置。
+	setIntFromEnv(&c.JwtConfig.ExpireDuration, "GONEXUS_JWT_EXPIRE_HOURS")
+	setStringFromEnv(&c.JwtConfig.Issuer, "GONEXUS_JWT_ISSUER")
+	setStringFromEnv(&c.JwtConfig.Subject, "GONEXUS_JWT_SUBJECT")
+	setStringFromEnv(&c.JwtConfig.Key, "GONEXUS_JWT_KEY")
+
+	// RabbitMQ 配置。生产环境中的密码应来自密钥管理服务。
+	setStringFromEnv(&c.Rabbitmq.RabbitmqHost, "GONEXUS_RABBITMQ_HOST")
+	setIntFromEnv(&c.Rabbitmq.RabbitmqPort, "GONEXUS_RABBITMQ_PORT")
+	setStringFromEnv(&c.Rabbitmq.RabbitmqUsername, "GONEXUS_RABBITMQ_USERNAME")
+	setStringFromEnv(&c.Rabbitmq.RabbitmqPassword, "GONEXUS_RABBITMQ_PASSWORD")
+	setStringFromEnv(&c.Rabbitmq.RabbitmqVhost, "GONEXUS_RABBITMQ_VHOST")
+
+	// LLM 和 RAG 配置。保留 OPENAI_* 别名以兼容 OpenAI 协议供应商。
+	setStringFromEnv(&c.RagModelConfig.RagEmbeddingModel, "LLM_EMBEDDING_MODEL")
+	setStringFromEnv(&c.RagModelConfig.RagChatModelName, "LLM_MODEL_ID")
+	setStringFromEnv(&c.RagModelConfig.RagChatModelName, "OPENAI_MODEL_NAME")
+	setStringFromEnv(&c.RagModelConfig.RagDocDir, "GONEXUS_RAG_DOC_DIR")
+	setStringFromEnv(&c.RagModelConfig.RagBaseUrl, "LLM_BASE_URL")
+	setStringFromEnv(&c.RagModelConfig.RagBaseUrl, "OPENAI_BASE_URL")
+	setIntFromEnv(&c.RagModelConfig.RagDimension, "GONEXUS_RAG_DIMENSION")
+	setStringFromEnv(&c.RagModelConfig.RagApiKey, "LLM_API_KEY")
+	setStringFromEnv(&c.RagModelConfig.RagApiKey, "OPENAI_API_KEY")
+
+	// 可选的语音服务凭证。
+	setStringFromEnv(&c.VoiceServiceConfig.VoiceServiceApiKey, "GONEXUS_VOICE_API_KEY")
+	setStringFromEnv(&c.VoiceServiceConfig.VoiceServiceSecretKey, "GONEXUS_VOICE_SECRET_KEY")
+
+	// 注册控制和默认用户初始化配置。
+	setStringFromEnv(&c.RegisterConfig.Secret, "GONEXUS_REGISTER_SECRET")
+	setStringFromEnv(&c.DefaultUserConfig.Username, "GONEXUS_DEFAULT_USERNAME")
+	setStringFromEnv(&c.DefaultUserConfig.Password, "GONEXUS_DEFAULT_PASSWORD")
+}
+
+// InitConfig 先加载本地 config.toml，再应用环境变量覆盖。
+// 这样同一套代码可以同时支持本地开发和 AWS 容器化部署。
+func InitConfig() error {
+	// 容器中如果把 config.toml 挂载到其他路径，可以用 GONEXUS_CONFIG_PATH 指定。
+	configPath := os.Getenv("GONEXUS_CONFIG_PATH")
+	if configPath == "" {
+		configPath = "config/config.toml"
+	}
+
+	// 生产环境允许没有 config.toml，因为 ECS 可以通过环境变量或注入的 secret 提供配置。
+	if _, err := os.Stat(configPath); err == nil {
+		if _, err := toml.DecodeFile(configPath, config); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	} else {
+		log.Printf("config file %s not found; using environment variables and zero-value defaults", configPath)
+	}
+
+	applyEnvOverrides(config)
 	return nil
 }
 
+// GetConfig 返回全局单例配置。
 func GetConfig() *Config {
 	if config == nil {
 		config = new(Config)
@@ -117,6 +217,7 @@ func GetConfig() *Config {
 	return config
 }
 
+// GetRegisterSecret 保持旧调用方式，同时允许 ECS task secret 覆盖本地 TOML 值。
 func (c *Config) GetRegisterSecret() string {
 	if secret := os.Getenv("GONEXUS_REGISTER_SECRET"); secret != "" {
 		return secret
@@ -124,6 +225,7 @@ func (c *Config) GetRegisterSecret() string {
 	return c.RegisterConfig.Secret
 }
 
+// GetDefaultUsername 返回可选的初始化默认用户名。
 func (c *Config) GetDefaultUsername() string {
 	if username := os.Getenv("GONEXUS_DEFAULT_USERNAME"); username != "" {
 		return username
@@ -131,6 +233,7 @@ func (c *Config) GetDefaultUsername() string {
 	return c.DefaultUserConfig.Username
 }
 
+// GetDefaultPassword 返回可选的初始化默认密码。
 func (c *Config) GetDefaultPassword() string {
 	if password := os.Getenv("GONEXUS_DEFAULT_PASSWORD"); password != "" {
 		return password
@@ -138,6 +241,7 @@ func (c *Config) GetDefaultPassword() string {
 	return c.DefaultUserConfig.Password
 }
 
+// GetLLMAPIKey 同时支持通用 LLM_API_KEY 和 OpenAI 兼容的 OPENAI_API_KEY。
 func (c *Config) GetLLMAPIKey() string {
 	if key := os.Getenv("LLM_API_KEY"); key != "" {
 		return key
@@ -148,6 +252,7 @@ func (c *Config) GetLLMAPIKey() string {
 	return c.RagModelConfig.RagApiKey
 }
 
+// GetLLMModelID 同时支持通用和 OpenAI 兼容的模型环境变量名。
 func (c *Config) GetLLMModelID() string {
 	if modelID := os.Getenv("LLM_MODEL_ID"); modelID != "" {
 		return modelID
@@ -158,6 +263,7 @@ func (c *Config) GetLLMModelID() string {
 	return c.RagModelConfig.RagChatModelName
 }
 
+// GetLLMBaseURL 支持 Gemini、DashScope 等 OpenAI 兼容供应商的 base URL。
 func (c *Config) GetLLMBaseURL() string {
 	if baseURL := os.Getenv("LLM_BASE_URL"); baseURL != "" {
 		return baseURL

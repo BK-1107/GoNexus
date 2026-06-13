@@ -130,6 +130,7 @@ func CreateStreamSessionAndSendMessage(c *gin.Context) {
 	code_ = session.StreamMessageToExistingSession(userName, sessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
 	if code_ != code.CodeSuccess {
 		c.SSEvent("error", gin.H{"message": "Failed to send message"})
+		c.Writer.Flush()
 		return
 	}
 }
@@ -176,6 +177,7 @@ func ChatStreamSend(c *gin.Context) {
 	code_ := session.ChatStreamSend(userName, req.SessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
 	if code_ != code.CodeSuccess {
 		c.SSEvent("error", gin.H{"message": "Failed to send message"})
+		c.Writer.Flush()
 		return
 	}
 }

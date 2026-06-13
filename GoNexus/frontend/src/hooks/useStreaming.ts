@@ -43,6 +43,7 @@ export function useStreaming() {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let accumulatedContent = ''
+      let currentEvent = 'message'
 
       while (true) {
         const { value, done } = await reader.read()
@@ -52,6 +53,11 @@ export function useStreaming() {
         const lines = chunk.split('\n')
         
         for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim()
+            continue
+          }
+
           if (line.startsWith('data: ')) {
             const data = line.slice(6).trim()
             
@@ -71,8 +77,20 @@ export function useStreaming() {
               continue
             }
 
+            if (currentEvent === 'error') {
+              try {
+                const parsed = JSON.parse(data)
+                updateLastMessage(`Error: ${parsed.message || 'AI request failed.'}`)
+              } catch {
+                updateLastMessage(`Error: ${data}`)
+              }
+              currentEvent = 'message'
+              continue
+            }
+
             accumulatedContent += data
             updateLastMessage(accumulatedContent)
+            currentEvent = 'message'
           }
         }
       }

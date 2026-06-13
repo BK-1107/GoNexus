@@ -1,6 +1,63 @@
-version: '3.8'
-
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gonexus_frontend
+    restart: always
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gonexus_backend
+    restart: always
+    environment:
+      GONEXUS_HOST: 0.0.0.0
+      GONEXUS_PORT: 9090
+      GONEXUS_MYSQL_HOST: mysql
+      GONEXUS_MYSQL_PORT: 3306
+      GONEXUS_MYSQL_USER: root
+      GONEXUS_MYSQL_PASSWORD: root
+      GONEXUS_MYSQL_DATABASE: GoNexus
+      GONEXUS_MYSQL_CHARSET: utf8mb4
+      GONEXUS_REDIS_HOST: redis
+      GONEXUS_REDIS_PORT: 6379
+      GONEXUS_REDIS_DB: 0
+      GONEXUS_RABBITMQ_HOST: rabbitmq
+      GONEXUS_RABBITMQ_PORT: 5672
+      GONEXUS_RABBITMQ_USERNAME: root
+      GONEXUS_RABBITMQ_PASSWORD: 123456
+      GONEXUS_RABBITMQ_VHOST: /
+      GONEXUS_LOG_DIR: logs
+      GONEXUS_JWT_KEY: ${GONEXUS_JWT_KEY:-GoNexusLocalDevJwtSecret}
+      GONEXUS_REGISTER_SECRET: ${GONEXUS_REGISTER_SECRET:-}
+      GONEXUS_DEFAULT_USERNAME: ${GONEXUS_DEFAULT_USERNAME:-}
+      GONEXUS_DEFAULT_PASSWORD: ${GONEXUS_DEFAULT_PASSWORD:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL_ID: ${LLM_MODEL_ID:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_EMBEDDING_MODEL: ${LLM_EMBEDDING_MODEL:-}
+      GONEXUS_RAG_DIMENSION: ${GONEXUS_RAG_DIMENSION:-}
+      GONEXUS_RAG_DOC_DIR: ${GONEXUS_RAG_DOC_DIR:-}
+    ports:
+      - "9090:9090"
+    volumes:
+      - backend_uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./config/config.toml:/app/config/config.toml:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
   mysql:
     image: mysql:8.0
     container_name: gopherai_mysql
@@ -13,6 +70,11 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis/redis-stack:latest
@@ -20,9 +82,14 @@ services:
     restart: always
     ports:
       - "6379:6379"
-      - "8001:8001" # RedisInsight 管理界面
+      - "8001:8001"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -32,12 +99,18 @@ services:
       RABBITMQ_DEFAULT_USER: root
       RABBITMQ_DEFAULT_PASS: 123456
     ports:
-      - "5672:5672" # 消息队列端口
-      - "15672:15672" # RabbitMQ 管理后台网页端跨口 (用户名 root 密码 123456)
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
 volumes:
+  backend_uploads:
   mysql_data:
   redis_data:
   rabbitmq_data:

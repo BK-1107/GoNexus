@@ -33,12 +33,14 @@ docker-compose up -d
 ```
 
 ### 2. Backend Setup
-1. Configure `GoNexus/config/config.toml` with your API keys and database credentials.
+1. Copy `GoNexus/config/config.example.toml` to `GoNexus/config/config.toml` and fill in your local credentials. Keep `config.toml` out of Git.
 2. Install dependencies and run:
 ```bash
 go mod tidy
 go run main.go
 ```
+
+For cloud deployments, configuration can be injected with environment variables such as `GONEXUS_MYSQL_HOST`, `GONEXUS_REDIS_HOST`, `GONEXUS_RABBITMQ_HOST`, `GONEXUS_JWT_KEY`, `LLM_API_KEY`, `LLM_MODEL_ID`, and `LLM_BASE_URL`.
 
 ### 3. Frontend Setup
 1. Navigate to the `GoNexus/frontend` directory.
