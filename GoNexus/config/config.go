@@ -59,6 +59,25 @@ type RagModelConfig struct {
 	RagApiKey         string `toml:"apiKey"`
 }
 
+type ChatModelConfig struct {
+	ModelName string `toml:"modelName"`
+	BaseUrl   string `toml:"baseUrl"`
+	ApiKey    string `toml:"apiKey"`
+}
+
+type EmbeddingModelConfig struct {
+	ModelName string `toml:"modelName"`
+	BaseUrl   string `toml:"baseUrl"`
+	Dimension int    `toml:"dimension"`
+	ApiKey    string `toml:"apiKey"`
+}
+
+type VisionModelConfig struct {
+	ModelName string `toml:"modelName"`
+	BaseUrl   string `toml:"baseUrl"`
+	ApiKey    string `toml:"apiKey"`
+}
+
 type VoiceServiceConfig struct {
 	VoiceServiceApiKey    string `toml:"voiceServiceApiKey"`
 	VoiceServiceSecretKey string `toml:"voiceServiceSecretKey"`
@@ -74,16 +93,19 @@ type DefaultUserConfig struct {
 }
 
 type Config struct {
-	EmailConfig        `toml:"emailConfig"`
-	RedisConfig        `toml:"redisConfig"`
-	MysqlConfig        `toml:"mysqlConfig"`
-	JwtConfig          `toml:"jwtConfig"`
-	MainConfig         `toml:"mainConfig"`
-	Rabbitmq           `toml:"rabbitmqConfig"`
-	RagModelConfig     `toml:"ragModelConfig"`
-	VoiceServiceConfig `toml:"voiceServiceConfig"`
-	RegisterConfig     `toml:"registerConfig"`
-	DefaultUserConfig  `toml:"defaultUserConfig"`
+	EmailConfig          `toml:"emailConfig"`
+	RedisConfig          `toml:"redisConfig"`
+	MysqlConfig          `toml:"mysqlConfig"`
+	JwtConfig            `toml:"jwtConfig"`
+	MainConfig           `toml:"mainConfig"`
+	Rabbitmq             `toml:"rabbitmqConfig"`
+	RagModelConfig       `toml:"ragModelConfig"`
+	ChatModelConfig      `toml:"chatModelConfig"`
+	EmbeddingModelConfig `toml:"embeddingModelConfig"`
+	VisionModelConfig    `toml:"visionModelConfig"`
+	VoiceServiceConfig   `toml:"voiceServiceConfig"`
+	RegisterConfig       `toml:"registerConfig"`
+	DefaultUserConfig    `toml:"defaultUserConfig"`
 }
 
 // RedisKeyConfig 定义验证码和 RAG 索引用到的 Redis key 命名规则。
@@ -173,6 +195,26 @@ func applyEnvOverrides(c *Config) {
 	setIntFromEnv(&c.RagModelConfig.RagDimension, "GONEXUS_RAG_DIMENSION")
 	setStringFromEnv(&c.RagModelConfig.RagApiKey, "LLM_API_KEY")
 	setStringFromEnv(&c.RagModelConfig.RagApiKey, "OPENAI_API_KEY")
+
+	// Chat, embedding, and vision can use different providers in production.
+	setStringFromEnv(&c.ChatModelConfig.ModelName, "CHAT_MODEL_ID")
+	setStringFromEnv(&c.ChatModelConfig.ModelName, "DEEPSEEK_MODEL_ID")
+	setStringFromEnv(&c.ChatModelConfig.BaseUrl, "CHAT_BASE_URL")
+	setStringFromEnv(&c.ChatModelConfig.BaseUrl, "DEEPSEEK_BASE_URL")
+	setStringFromEnv(&c.ChatModelConfig.ApiKey, "CHAT_API_KEY")
+	setStringFromEnv(&c.ChatModelConfig.ApiKey, "DEEPSEEK_API_KEY")
+
+	setStringFromEnv(&c.EmbeddingModelConfig.ModelName, "EMBEDDING_MODEL_ID")
+	setStringFromEnv(&c.EmbeddingModelConfig.BaseUrl, "EMBEDDING_BASE_URL")
+	setIntFromEnv(&c.EmbeddingModelConfig.Dimension, "EMBEDDING_DIMENSION")
+	setStringFromEnv(&c.EmbeddingModelConfig.ApiKey, "EMBEDDING_API_KEY")
+	setStringFromEnv(&c.EmbeddingModelConfig.ApiKey, "GOOGLE_API_KEY")
+	setStringFromEnv(&c.EmbeddingModelConfig.ApiKey, "GEMINI_API_KEY")
+
+	setStringFromEnv(&c.VisionModelConfig.ModelName, "VISION_MODEL_ID")
+	setStringFromEnv(&c.VisionModelConfig.BaseUrl, "VISION_BASE_URL")
+	setStringFromEnv(&c.VisionModelConfig.ApiKey, "VISION_API_KEY")
+	setStringFromEnv(&c.VisionModelConfig.ApiKey, "GOOGLE_VISION_API_KEY")
 
 	// 可选的语音服务凭证。
 	setStringFromEnv(&c.VoiceServiceConfig.VoiceServiceApiKey, "GONEXUS_VOICE_API_KEY")
@@ -272,4 +314,110 @@ func (c *Config) GetLLMBaseURL() string {
 		return baseURL
 	}
 	return c.RagModelConfig.RagBaseUrl
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func firstEnv(keys ...string) string {
+	for _, key := range keys {
+		if value := os.Getenv(key); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func (c *Config) GetChatAPIKey() string {
+	return firstNonEmpty(
+		firstEnv("CHAT_API_KEY", "DEEPSEEK_API_KEY", "LLM_API_KEY", "OPENAI_API_KEY"),
+		c.ChatModelConfig.ApiKey,
+		c.RagModelConfig.RagApiKey,
+	)
+}
+
+func (c *Config) GetChatModelID() string {
+	return firstNonEmpty(
+		firstEnv("CHAT_MODEL_ID", "DEEPSEEK_MODEL_ID", "LLM_MODEL_ID", "OPENAI_MODEL_NAME"),
+		c.ChatModelConfig.ModelName,
+		c.RagModelConfig.RagChatModelName,
+	)
+}
+
+func (c *Config) GetChatBaseURL() string {
+	return firstNonEmpty(
+		firstEnv("CHAT_BASE_URL", "DEEPSEEK_BASE_URL", "LLM_BASE_URL", "OPENAI_BASE_URL"),
+		c.ChatModelConfig.BaseUrl,
+		c.RagModelConfig.RagBaseUrl,
+	)
+}
+
+func (c *Config) GetEmbeddingAPIKey() string {
+	return firstNonEmpty(
+		firstEnv("EMBEDDING_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY"),
+		c.EmbeddingModelConfig.ApiKey,
+		c.RagModelConfig.RagApiKey,
+	)
+}
+
+func (c *Config) GetEmbeddingModelID() string {
+	return firstNonEmpty(
+		firstEnv("EMBEDDING_MODEL_ID", "LLM_EMBEDDING_MODEL"),
+		c.EmbeddingModelConfig.ModelName,
+		c.RagModelConfig.RagEmbeddingModel,
+	)
+}
+
+func (c *Config) GetEmbeddingBaseURL() string {
+	return firstNonEmpty(
+		firstEnv("EMBEDDING_BASE_URL"),
+		c.EmbeddingModelConfig.BaseUrl,
+		c.RagModelConfig.RagBaseUrl,
+	)
+}
+
+func (c *Config) GetEmbeddingDimension() int {
+	if value := os.Getenv("EMBEDDING_DIMENSION"); value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err == nil {
+			return parsed
+		}
+	}
+	if c.EmbeddingModelConfig.Dimension != 0 {
+		return c.EmbeddingModelConfig.Dimension
+	}
+	return c.RagModelConfig.RagDimension
+}
+
+func (c *Config) GetVisionAPIKey() string {
+	return firstNonEmpty(
+		firstEnv("VISION_API_KEY", "GOOGLE_VISION_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY"),
+		c.VisionModelConfig.ApiKey,
+		c.EmbeddingModelConfig.ApiKey,
+		c.RagModelConfig.RagApiKey,
+	)
+}
+
+func (c *Config) GetVisionModelID() string {
+	return firstNonEmpty(
+		firstEnv("VISION_MODEL_ID"),
+		c.VisionModelConfig.ModelName,
+		c.EmbeddingModelConfig.ModelName,
+		c.RagModelConfig.RagChatModelName,
+	)
+}
+
+func (c *Config) GetVisionBaseURL() string {
+	return firstNonEmpty(
+		firstEnv("VISION_BASE_URL"),
+		c.VisionModelConfig.BaseUrl,
+		c.EmbeddingModelConfig.BaseUrl,
+		c.RagModelConfig.RagBaseUrl,
+	)
 }

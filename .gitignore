@@ -42,6 +42,7 @@ GoNexus/uploads/
 GoNexus/config/config.toml
 config/*.toml
 .envrc
+GoNexus/.docker-config/
 
 # Executables and Installation Packages
 *.exe
@@ -64,6 +65,9 @@ GoNexus/main
 
 # Go specific
 .gocache/
+.gocache-cors/
+GoNexus/.gocache/
+GoNexus/.gocache-cors/
 go.work.sum
 /bin/
 /pkg/
@@ -92,3 +96,7 @@ vendor/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# AWS/generated deployment files
+GoNexus/aws/*.generated.json
+GoNexus/frontend/bucket-policy.json

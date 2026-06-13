@@ -36,9 +36,9 @@ type OpenAIModel struct {
 
 func NewOpenAIModel(ctx context.Context) (*OpenAIModel, error) {
 	conf := config.GetConfig()
-	key := conf.GetLLMAPIKey()
-	modelName := conf.GetLLMModelID()
-	baseURL := conf.GetLLMBaseURL()
+	key := conf.GetChatAPIKey()
+	modelName := conf.GetChatModelID()
+	baseURL := conf.GetChatBaseURL()
 
 	llm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		BaseURL: baseURL,
@@ -147,9 +147,9 @@ type AliRAGModel struct {
 
 func NewAliRAGModel(ctx context.Context, username string) (*AliRAGModel, error) {
 	conf := config.GetConfig()
-	key := conf.GetLLMAPIKey()
-	modelName := conf.GetLLMModelID()
-	baseURL := conf.GetLLMBaseURL()
+	key := conf.GetChatAPIKey()
+	modelName := conf.GetChatModelID()
+	baseURL := conf.GetChatBaseURL()
 
 	llm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		BaseURL: baseURL,
@@ -320,9 +320,9 @@ type MCPModel struct {
 // NewMCPModel 创建MCP模型实例
 func NewMCPModel(ctx context.Context, username string) (*MCPModel, error) {
 	conf := config.GetConfig()
-	key := conf.GetLLMAPIKey()
-	modelName := conf.GetLLMModelID()
-	baseURL := conf.GetLLMBaseURL()
+	key := conf.GetChatAPIKey()
+	modelName := conf.GetChatModelID()
+	baseURL := conf.GetChatBaseURL()
 
 	// 创建LLM
 	llm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{

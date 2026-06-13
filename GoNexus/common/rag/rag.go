@@ -43,9 +43,9 @@ type RAGQuery struct {
 func NewRAGEmbedder(ctx context.Context) (embedding.Embedder, error) {
 	cfg := config.GetConfig()
 	return openai.NewEmbedder(ctx, &openai.EmbeddingConfig{
-		BaseURL: cfg.GetLLMBaseURL(),
-		APIKey:  cfg.GetLLMAPIKey(),
-		Model:   cfg.RagModelConfig.RagEmbeddingModel,
+		BaseURL: cfg.GetEmbeddingBaseURL(),
+		APIKey:  cfg.GetEmbeddingAPIKey(),
+		Model:   cfg.GetEmbeddingModelID(),
 	})
 }
 
@@ -59,7 +59,7 @@ func NewRAGIndexer(indexID string) (*RAGIndexer, error) {
 	}
 
 	// 初始化 Redis Search 向量索引，dimension 必须和 embedding 模型输出维度一致。
-	dimension := config.GetConfig().RagModelConfig.RagDimension
+	dimension := config.GetConfig().GetEmbeddingDimension()
 	if err := redisPkg.InitRedisIndex(ctx, indexID, dimension); err != nil {
 		return nil, fmt.Errorf("failed to init redis index: %w", err)
 	}

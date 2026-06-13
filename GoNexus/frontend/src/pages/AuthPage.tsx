@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthStore } from "@/store/authStore"
 import axios from "axios"
+import { apiUrl } from "@/api/base"
 import { Shield, User, Lock, ArrowRight, Mail, KeyRound } from "lucide-react"
 
 export function AuthPage() {
@@ -20,7 +21,7 @@ export function AuthPage() {
   const handleInviteCheck = async () => {
     setError("")
     try {
-      const res = await axios.post("/api/v1/user/check-invite", { inviteCode })
+      const res = await axios.post(apiUrl("/user/check-invite"), { inviteCode })
       if (res.data?.status_code === 1000) {
         setInviteVerified(true)
       } else {
@@ -36,7 +37,7 @@ export function AuthPage() {
     setError("")
     setIsSendingCaptcha(true)
     try {
-      const res = await axios.post("/api/v1/user/captcha", { email })
+      const res = await axios.post(apiUrl("/user/captcha"), { email })
       if (res.data?.status_code !== 1000) {
         setError(res.data?.status_msg || "Failed to send captcha")
       }
@@ -57,9 +58,9 @@ export function AuthPage() {
     }
 
     try {
-      const endpoint = isLogin ? "/api/v1/user/login" : "/api/v1/user/register"
+      const endpoint = isLogin ? "/user/login" : "/user/register"
       const payload = isLogin ? { username, password } : { email, password, captcha }
-      const res = await axios.post(endpoint, payload)
+      const res = await axios.post(apiUrl(endpoint), payload)
 
       if (res.data?.status_code === 1000) {
         const token = res.data.token

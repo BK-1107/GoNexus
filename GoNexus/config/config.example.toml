@@ -42,6 +42,22 @@ baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/"
 dimension = 3072
 apiKey = "YOUR_LLM_API_KEY"
 
+[chatModelConfig]
+modelName = "deepseek-chat"
+baseUrl = "https://api.deepseek.com"
+apiKey = "YOUR_DEEPSEEK_API_KEY"
+
+[embeddingModelConfig]
+modelName = "gemini-embedding-001"
+baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/"
+dimension = 3072
+apiKey = "YOUR_GOOGLE_API_KEY"
+
+[visionModelConfig]
+modelName = "gemini-2.5-flash"
+baseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/"
+apiKey = "YOUR_GOOGLE_API_KEY"
+
 [voiceServiceConfig]
 voiceServiceApiKey = "YOUR_VOICE_SERVICE_API_KEY"
 voiceServiceSecretKey = "YOUR_VOICE_SERVICE_SECRET_KEY"

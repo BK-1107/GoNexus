@@ -53,7 +53,7 @@ func CreateSessionAndSendMessage(userName string, userQuestion string, modelType
 	//2：获取AIHelper并通过其管理消息
 	manager := aihelper.GetGlobalManager()
 	config_ := map[string]interface{}{
-		"apiKey":   config.GetConfig().GetLLMAPIKey(),
+		"apiKey":   config.GetConfig().GetChatAPIKey(),
 		"username": userName, // 用于 RAG 模型获取用户文档
 	}
 	helper, err := manager.GetOrCreateAIHelper(userName, createdSession.ID, modelType, config_)
@@ -99,7 +99,7 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 
 	manager := aihelper.GetGlobalManager()
 	config_ := map[string]interface{}{
-		"apiKey":   config.GetConfig().GetLLMAPIKey(),
+		"apiKey":   config.GetConfig().GetChatAPIKey(),
 		"username": userName, // 用于 RAG 模型获取用户文档
 	}
 	helper, err := manager.GetOrCreateAIHelper(userName, sessionID, modelType, config_)

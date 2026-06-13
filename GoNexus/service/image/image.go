@@ -70,9 +70,9 @@ func RecognizeImage(file *multipart.FileHeader) (string, error) {
 	dataURL := fmt.Sprintf("data:%s;base64,%s", mimeType, base64.StdEncoding.EncodeToString(imgData))
 
 	conf := config.GetConfig()
-	apiKey := conf.GetLLMAPIKey()
-	baseURL := conf.GetLLMBaseURL()
-	modelID := conf.GetLLMModelID()
+	apiKey := conf.GetVisionAPIKey()
+	baseURL := conf.GetVisionBaseURL()
+	modelID := conf.GetVisionModelID()
 	if apiKey == "" || baseURL == "" || modelID == "" {
 		return "", fmt.Errorf("AI API key, base URL, or model ID is missing in config")
 	}

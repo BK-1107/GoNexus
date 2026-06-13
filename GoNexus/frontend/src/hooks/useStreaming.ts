@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { useChatStore } from '@/store/chatStore'
+import { apiUrl } from '@/api/base'
 
 export function useStreaming() {
   const token = useAuthStore((state) => state.token)
@@ -28,7 +29,7 @@ export function useStreaming() {
     addMessage({ role: 'assistant', content: '' })
 
     try {
-      const response = await fetch(`/api/v1${url}`, {
+      const response = await fetch(apiUrl(url), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
