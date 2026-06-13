@@ -198,6 +198,7 @@ func GetChatHistory(userName string, sessionID string) ([]model.History, code.Co
 	history := make([]model.History, 0, len(messages))
 	for _, msg := range messages {
 		history = append(history, model.History{
+			ID:      msg.ID,
 			IsUser:  msg.IsUser,
 			Content: msg.Content,
 		})
@@ -225,5 +226,22 @@ func DeleteSession(userName string, sessionID string) code.Code {
 	if err != nil {
 		return code.CodeServerBusy
 	}
+	return code.CodeSuccess
+}
+
+func DeleteMessage(userName string, messageID uint) code.Code {
+	msg, err := daomessage.GetMessageByID(messageID)
+	if err != nil {
+		return code.CodeRecordNotFound
+	}
+	if msg.UserName != userName {
+		return code.CodeInvalidParams
+	}
+
+	if err := daomessage.DeleteMessageByID(messageID); err != nil {
+		return code.CodeServerBusy
+	}
+
+	aihelper.GetGlobalManager().RemoveMessageFromSession(userName, msg.SessionID, messageID)
 	return code.CodeSuccess
 }

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export interface Message {
+  id?: number
   role: 'user' | 'assistant'
   content: string
 }
@@ -24,6 +25,7 @@ interface ChatState {
   setCurrentSessionId: (id: string | null, skipClear?: boolean) => void
   setMessages: (messages: Message[]) => void
   addMessage: (message: Message) => void
+  removeMessage: (index: number, id?: number) => void
   updateLastMessage: (content: string) => void
   setIsStreaming: (isStreaming: boolean) => void
   setModelType: (type: string) => void
@@ -48,6 +50,14 @@ export const useChatStore = create<ChatState>()(
       })),
       setMessages: (messages) => set({ messages }),
       addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+      removeMessage: (index, id) => set((state) => ({
+        messages: state.messages.filter((message, messageIndex) => {
+          if (id !== undefined) {
+            return message.id !== id
+          }
+          return messageIndex !== index
+        })
+      })),
       updateLastMessage: (content) => set((state) => {
         const newMessages = [...state.messages]
         if (newMessages.length > 0) {

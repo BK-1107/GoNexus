@@ -7,41 +7,41 @@ import (
 
 var ctx = context.Background()
 
-// AIHelperManager AI助手管理器，管理用户-会话-AIHelper的映射关系
+// AIHelperManager AI鍔╂墜绠＄悊鍣紝绠＄悊鐢ㄦ埛-浼氳瘽-AIHelper鐨勬槧灏勫叧绯?
 type AIHelperManager struct {
-	helpers map[string]map[string]*AIHelper // map[用户账号（唯一）]map[会话ID]*AIHelper
+	helpers map[string]map[string]*AIHelper // map[鐢ㄦ埛璐﹀彿锛堝敮涓€锛塢map[浼氳瘽ID]*AIHelper
 	mu      sync.RWMutex
 }
 
-// NewAIHelperManager 创建新的管理器实例
+// NewAIHelperManager 鍒涘缓鏂扮殑绠＄悊鍣ㄥ疄渚?
 func NewAIHelperManager() *AIHelperManager {
 	return &AIHelperManager{
 		helpers: make(map[string]map[string]*AIHelper),
 	}
 }
 
-// 获取或创建AIHelper
+// 鑾峰彇鎴栧垱寤篈IHelper
 func (m *AIHelperManager) GetOrCreateAIHelper(userName string, sessionID string, modelType string, config map[string]interface{}) (*AIHelper, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// 获取用户的会话映射
+	// 鑾峰彇鐢ㄦ埛鐨勪細璇濇槧灏?
 	userHelpers, exists := m.helpers[userName]
 	if !exists {
 		userHelpers = make(map[string]*AIHelper)
 		m.helpers[userName] = userHelpers
 	}
 
-	// [修复] 缓存键增加 modelType，确保模式切换有效
+	// [淇] 缂撳瓨閿鍔?modelType锛岀‘淇濇ā寮忓垏鎹㈡湁鏁?
 	cacheKey := sessionID + "_" + modelType
 
-	// 检查会话是否已存在
+	// 妫€鏌ヤ細璇濇槸鍚﹀凡瀛樺湪
 	helper, exists := userHelpers[cacheKey]
 	if exists {
 		return helper, nil
 	}
 
-	// 创建新的AIHelper
+	// 鍒涘缓鏂扮殑AIHelper
 	factory := GetGlobalFactory()
 	helper, err := factory.CreateAIHelper(ctx, modelType, sessionID, config)
 	if err != nil {
@@ -52,7 +52,7 @@ func (m *AIHelperManager) GetOrCreateAIHelper(userName string, sessionID string,
 	return helper, nil
 }
 
-// 获取指定用户的指定会话的AIHelper
+// 鑾峰彇鎸囧畾鐢ㄦ埛鐨勬寚瀹氫細璇濈殑AIHelper
 func (m *AIHelperManager) GetAIHelper(userName string, sessionID string) (*AIHelper, bool) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -66,7 +66,7 @@ func (m *AIHelperManager) GetAIHelper(userName string, sessionID string) (*AIHel
 	return helper, exists
 }
 
-// 移除指定用户的指定会话的AIHelper
+// 绉婚櫎鎸囧畾鐢ㄦ埛鐨勬寚瀹氫細璇濈殑AIHelper
 func (m *AIHelperManager) RemoveAIHelper(userName string, sessionID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -78,13 +78,28 @@ func (m *AIHelperManager) RemoveAIHelper(userName string, sessionID string) {
 
 	delete(userHelpers, sessionID)
 
-	// 如果用户没有会话了，清理用户映射
+	// 濡傛灉鐢ㄦ埛娌℃湁浼氳瘽浜嗭紝娓呯悊鐢ㄦ埛鏄犲皠
 	if len(userHelpers) == 0 {
 		delete(m.helpers, userName)
 	}
 }
 
-// 获取指定用户的所有会话ID
+// 鑾峰彇鎸囧畾鐢ㄦ埛鐨勬墍鏈変細璇滻D
+func (m *AIHelperManager) RemoveMessageFromSession(userName string, sessionID string, messageID uint) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	userHelpers, exists := m.helpers[userName]
+	if !exists {
+		return
+	}
+
+	for _, helper := range userHelpers {
+		if helper.SessionID == sessionID {
+			helper.RemoveMessageByID(messageID)
+		}
+	}
+}
 func (m *AIHelperManager) GetUserSessions(userName string) []string {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -95,7 +110,7 @@ func (m *AIHelperManager) GetUserSessions(userName string) []string {
 	}
 
 	sessionIDs := make([]string, 0, len(userHelpers))
-	//取出所有的key
+	//鍙栧嚭鎵€鏈夌殑key
 	for sessionID := range userHelpers {
 		sessionIDs = append(sessionIDs, sessionID)
 	}
@@ -103,11 +118,11 @@ func (m *AIHelperManager) GetUserSessions(userName string) []string {
 	return sessionIDs
 }
 
-// 全局管理器实例
+// 鍏ㄥ眬绠＄悊鍣ㄥ疄渚?
 var globalManager *AIHelperManager
 var once sync.Once
 
-// GetGlobalManager 获取全局管理器实例
+// GetGlobalManager 鑾峰彇鍏ㄥ眬绠＄悊鍣ㄥ疄渚?
 func GetGlobalManager() *AIHelperManager {
 	once.Do(func() {
 		globalManager = NewAIHelperManager()

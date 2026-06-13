@@ -7,6 +7,7 @@ import (
 	"GoNexus/service/session"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -100,7 +101,7 @@ func CreateSessionAndSendMessage(c *gin.Context) {
 // 它会先把 sessionId 推给前端，让前端可以立即显示新会话，再继续推送 AI 输出内容。
 func CreateStreamSessionAndSendMessage(c *gin.Context) {
 	req := new(CreateSessionAndSendMessageRequest)
-	userName := c.GetString("userName") 
+	userName := c.GetString("userName")
 
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": "Invalid parameters"})
@@ -137,7 +138,7 @@ func CreateStreamSessionAndSendMessage(c *gin.Context) {
 func ChatSend(c *gin.Context) {
 	req := new(ChatSendRequest)
 	res := new(ChatSendResponse)
-	userName := c.GetString("userName") 
+	userName := c.GetString("userName")
 
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
@@ -183,7 +184,7 @@ func ChatStreamSend(c *gin.Context) {
 func ChatHistory(c *gin.Context) {
 	req := new(ChatHistoryRequest)
 	res := new(ChatHistoryResponse)
-	userName := c.GetString("userName") 
+	userName := c.GetString("userName")
 
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
@@ -201,13 +202,29 @@ func ChatHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
-
 // DeleteSession 删除当前用户的指定会话。
 func DeleteSession(c *gin.Context) {
 	sessionID := c.Param("id")
 	userName := c.GetString("userName")
 	// 调用 service 层删除会话，service 层会校验会话是否属于当前用户。
 	code_ := session.DeleteSession(userName, sessionID)
+	if code_ != code.CodeSuccess {
+		c.JSON(http.StatusOK, gin.H{"status_code": code_, "status_msg": "Delete failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status_code": code.CodeSuccess, "status_msg": "Success"})
+}
+
+func DeleteMessage(c *gin.Context) {
+	messageID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status_code": code.CodeInvalidParams, "status_msg": "Invalid message id"})
+		return
+	}
+
+	userName := c.GetString("userName")
+	code_ := session.DeleteMessage(userName, uint(messageID))
 	if code_ != code.CodeSuccess {
 		c.JSON(http.StatusOK, gin.H{"status_code": code_, "status_msg": "Delete failed"})
 		return

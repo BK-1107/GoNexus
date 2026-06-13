@@ -62,6 +62,18 @@ func (a *AIHelper) GetMessages() []*model.Message {
 	return out
 }
 
+func (a *AIHelper) RemoveMessageByID(messageID uint) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	for i, msg := range a.messages {
+		if msg.ID == messageID {
+			a.messages = append(a.messages[:i], a.messages[i+1:]...)
+			return
+		}
+	}
+}
+
 // 同步生成
 func (a *AIHelper) GenerateResponse(userName string, ctx context.Context, userQuestion string) (*model.Message, error) {
 

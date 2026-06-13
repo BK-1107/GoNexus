@@ -35,3 +35,13 @@ func GetAllMessages() ([]model.Message, error) {
 	err := mysql.DB.Order("created_at asc").Find(&msgs).Error
 	return msgs, err
 }
+
+func GetMessageByID(id uint) (*model.Message, error) {
+	var msg model.Message
+	err := mysql.DB.First(&msg, id).Error
+	return &msg, err
+}
+
+func DeleteMessageByID(id uint) error {
+	return mysql.DB.Delete(&model.Message{}, id).Error
+}

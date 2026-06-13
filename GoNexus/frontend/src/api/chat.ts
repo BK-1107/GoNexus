@@ -17,4 +17,6 @@ export const chatApi = {
 
   // 删除会话
   deleteSession: (sessionId: string) => client.delete(`/AI/chat/session/${sessionId}`),
+
+  deleteMessage: (messageId: number) => client.delete(`/AI/chat/message/${messageId}`),
 }

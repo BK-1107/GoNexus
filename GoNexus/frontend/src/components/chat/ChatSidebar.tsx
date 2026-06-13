@@ -63,6 +63,7 @@ export function ChatSidebar() {
       const res = await chatApi.getHistory(sessionId)
       if (res.data?.status_code === 1000 && res.data.history) {
         const history = res.data.history.map((m: any) => ({
+          id: m.id,
           role: m.is_user ? 'user' : 'assistant', 
           content: m.content
         }))

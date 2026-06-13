@@ -1,11 +1,35 @@
 import { motion } from "framer-motion"
 import { useChatStore } from "@/store/chatStore"
+import { chatApi } from "@/api/chat"
+import { X } from "lucide-react"
+import { useState } from "react"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 export function MessageList() {
-  const messages = useChatStore((state) => state.messages)
+  const { messages, removeMessage } = useChatStore()
+  const [deletingKey, setDeletingKey] = useState<string | null>(null)
+
+  const handleDeleteMessage = async (index: number, messageId?: number) => {
+    const deleteKey = messageId ? String(messageId) : `local-${index}`
+    if (deletingKey) return
+
+    setDeletingKey(deleteKey)
+    try {
+      if (messageId) {
+        const res = await chatApi.deleteMessage(messageId)
+        if (res.data?.status_code !== 1000) {
+          return
+        }
+      }
+      removeMessage(index, messageId)
+    } catch (err) {
+      console.error("Failed to delete message", err)
+    } finally {
+      setDeletingKey(null)
+    }
+  }
 
   return (
     <div className="flex-1 overflow-y-auto px-6 py-8 halftone-bg scroll-smooth">
@@ -18,10 +42,10 @@ export function MessageList() {
         ) : (
           messages.map((msg, i) => (
             <motion.div
-              key={i}
+              key={msg.id ?? `${msg.role}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`group/message flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'assistant' && (
                 <div className="w-12 h-12 bg-primary border-4 border-black shadow-brutal flex items-center justify-center mr-4 mt-2 shrink-0 transform -rotate-3">
@@ -39,6 +63,16 @@ export function MessageList() {
                   <div className="absolute -right-3 top-6 w-6 h-6 bg-secondary border-t-4 border-r-4 border-black transform rotate-45" />
                 )}
                 
+                <button
+                  type="button"
+                  onClick={() => handleDeleteMessage(i, msg.id)}
+                  disabled={deletingKey !== null}
+                  title="Delete message"
+                  className="absolute -right-3 -top-3 z-30 flex h-7 w-7 items-center justify-center border-4 border-black bg-destructive text-white opacity-0 shadow-[3px_3px_0px_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none group-hover/message:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <X size={14} strokeWidth={5} />
+                </button>
+
                 <div
                   className={`relative z-10 px-6 py-4 text-[16px] leading-relaxed font-bold border-4 border-black shadow-brutal prose prose-stone max-w-none ${
                     msg.role === 'user' 

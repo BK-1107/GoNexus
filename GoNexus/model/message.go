@@ -14,6 +14,7 @@ type Message struct {
 }
 
 type History struct {
+	ID      uint   `json:"id"`
 	IsUser  bool   `json:"is_user"`
 	Content string `json:"content"`
 }
