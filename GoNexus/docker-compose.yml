@@ -57,7 +57,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - backend_uploads:/app/uploads
+      - ./uploads:/app/uploads
       - ./logs:/app/logs
       - ./config/config.toml:/app/config/config.toml:ro
     depends_on:
@@ -120,7 +120,6 @@ services:
       retries: 10
 
 volumes:
-  backend_uploads:
   mysql_data:
   redis_data:
   rabbitmq_data:
