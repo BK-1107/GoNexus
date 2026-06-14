@@ -1,0 +1,158 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_frontend:
+        description: Rebuild and upload the S3 frontend after backend deploy
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: gonexus-prod-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  AWS_REGION: ap-northeast-1
+  ECR_REPOSITORY: gonexus-backend
+  ECS_CLUSTER: gonexus-cluster
+  ECS_SERVICE: gonexus-backend-service
+  ECS_TASK_FAMILY: gonexus-task
+  DB_INSTANCE_IDENTIFIER: gonexus
+  DB_NAME: GoNexus
+
+jobs:
+  deploy:
+    name: Deploy To AWS
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve AWS account
+        run: |
+          account_id="$(aws sts get-caller-identity --query Account --output text)"
+          echo "AWS_ACCOUNT_ID=${account_id}" >> "$GITHUB_ENV"
+          echo "FRONTEND_BUCKET=${FRONTEND_BUCKET:-gonexus-frontend-${account_id}}" >> "$GITHUB_ENV"
+        env:
+          FRONTEND_BUCKET: ${{ vars.FRONTEND_BUCKET }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: GoNexus
+          file: GoNexus/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+
+      - name: Register ECS task definition
+        working-directory: GoNexus
+        shell: pwsh
+        run: |
+          ./scripts/register-ecs-task.ps1 `
+            -Register `
+            -Region "${{ env.AWS_REGION }}" `
+            -DbInstanceIdentifier "${{ env.DB_INSTANCE_IDENTIFIER }}" `
+            -DbName "${{ env.DB_NAME }}" `
+            -ImageTag "${{ github.sha }}"
+
+      - name: Update ECS service
+        run: |
+          task_definition_arn="$(aws ecs describe-task-definition \
+            --task-definition "$ECS_TASK_FAMILY" \
+            --region "$AWS_REGION" \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)"
+
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$task_definition_arn" \
+            --force-new-deployment \
+            --region "$AWS_REGION"
+
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE" \
+            --region "$AWS_REGION"
+
+      - name: Resolve backend public IP
+        run: |
+          task_arn="$(aws ecs list-tasks \
+            --cluster "$ECS_CLUSTER" \
+            --service-name "$ECS_SERVICE" \
+            --desired-status RUNNING \
+            --region "$AWS_REGION" \
+            --query 'taskArns[0]' \
+            --output text)"
+
+          if [ -z "$task_arn" ] || [ "$task_arn" = "None" ]; then
+            echo "No running task found for $ECS_SERVICE" >&2
+            exit 1
+          fi
+
+          eni_id="$(aws ecs describe-tasks \
+            --cluster "$ECS_CLUSTER" \
+            --tasks "$task_arn" \
+            --region "$AWS_REGION" \
+            --query "tasks[0].attachments[0].details[?name=='networkInterfaceId'].value" \
+            --output text)"
+
+          public_ip="$(aws ec2 describe-network-interfaces \
+            --network-interface-ids "$eni_id" \
+            --region "$AWS_REGION" \
+            --query 'NetworkInterfaces[0].Association.PublicIp' \
+            --output text)"
+
+          if [ -z "$public_ip" ] || [ "$public_ip" = "None" ]; then
+            echo "No public IP found for task network interface $eni_id" >&2
+            exit 1
+          fi
+
+          echo "PUBLIC_IP=${public_ip}" >> "$GITHUB_ENV"
+          echo "API_BASE_URL=http://${public_ip}:9090/api/v1" >> "$GITHUB_ENV"
+
+      - name: Set up Node
+        if: ${{ inputs.deploy_frontend }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: GoNexus/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        if: ${{ inputs.deploy_frontend }}
+        working-directory: GoNexus/frontend
+        run: npm ci
+
+      - name: Build frontend
+        if: ${{ inputs.deploy_frontend }}
+        working-directory: GoNexus/frontend
+        run: VITE_API_BASE_URL="$API_BASE_URL" npm run build
+
+      - name: Upload frontend to S3
+        if: ${{ inputs.deploy_frontend }}
+        working-directory: GoNexus/frontend
+        run: aws s3 sync dist "s3://${FRONTEND_BUCKET}" --delete --region "$AWS_REGION"
+
+      - name: Deployment summary
+        run: |
+          echo "Backend API: $API_BASE_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "Frontend bucket: s3://$FRONTEND_BUCKET" >> "$GITHUB_STEP_SUMMARY"
