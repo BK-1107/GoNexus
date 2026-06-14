@@ -96,3 +96,15 @@ func UploadRagFile(username string, file *multipart.FileHeader) (string, error) 
 	return filePath, nil
 }
 
+func DeleteKnowledgeFile(username, filename string) error {
+	filePath := filepath.Join("uploads", username, filename)
+
+	// 删除文件
+	if err := os.Remove(filePath); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	}
+	log.Printf("Knowledge file deleted: %s/%s", username, filename)
+	return nil
+}
