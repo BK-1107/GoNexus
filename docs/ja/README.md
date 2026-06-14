@@ -12,7 +12,7 @@ GoNexus は、ユーザー認証、セッション管理、ストリーミング
 
 ## デモ
 
-<video src="../../assets/0615.mp4" controls width="100%"></video>
+![GoNexus デモ](../../assets/ezgif-1fbf6f6bb015c1ad.gif)
 
 ---
 

@@ -12,7 +12,7 @@ GoNexus is an AI chat platform designed to connect user authentication, session 
 
 ## Demo
 
-<video src="../../assets/0615.mp4" controls width="100%"></video>
+![GoNexus demo](../../assets/ezgif-1fbf6f6bb015c1ad.gif)
 
 ---
 
