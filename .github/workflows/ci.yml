@@ -24,11 +24,11 @@ jobs:
 
       - name: Test backend
         working-directory: GoNexus
-        run: go test ./...
+        run: go test -tags=nomsgpack ./...
 
       - name: Build backend
         working-directory: GoNexus
-        run: go build -trimpath -o /tmp/gonexus .
+        run: go build -tags=nomsgpack -trimpath -o /tmp/gonexus .
 
       - name: Set up Node
         uses: actions/setup-node@v4

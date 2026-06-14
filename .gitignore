@@ -66,8 +66,10 @@ GoNexus/main
 # Go specific
 .gocache/
 .gocache-cors/
+.gocache-*/
 GoNexus/.gocache/
 GoNexus/.gocache-cors/
+GoNexus/.gocache-*/
 go.work.sum
 /bin/
 /pkg/
