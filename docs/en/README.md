@@ -42,6 +42,12 @@ GoNexus is an AI chat platform designed to connect user authentication, session 
 
 ---
 
+## AWS Architecture
+
+![GoNexus AWS architecture diagram](../../assets/awsstructure.png)
+
+---
+
 ## Contents
 
 | Chapter | Key Topics | Status |
