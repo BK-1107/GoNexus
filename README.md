@@ -1,95 +1,95 @@
 # GoNexus : AI Chat Platform
 
-GoNexus 是一个 AI 聊天平台，核心目标是把用户登录、会话管理、流式 AI 聊天、RAG 本地知识库、图片识别和云端部署串成一套完整应用。
+GoNexus は、ユーザー認証、セッション管理、ストリーミング AI チャット、ローカル RAG ナレッジベース、画像認識、クラウドデプロイを 1 つにまとめた AI チャットプラットフォームです。
 
 <p align="left">
-  <strong>中文</strong> |
-  <a href="./docs/ja/README.md">日本語</a> |
+  <a href="./README_cn.md">中文</a> |
+  <strong>日本語</strong> |
   <a href="./docs/en/README.md">English</a>
 </p>
 
 ---
 
-## 项目展示
+## デモ
 
-![GoNexus 项目展示](./assets/ezgif-1fbf6f6bb015c1ad.gif)
-
----
-
-## 技术栈
-
-- 前端：React、TypeScript、Vite、Tailwind CSS、Zustand、Axios。
-- 后端：Go、Gin、JWT、Eino、OpenAI 兼容模型接口。
-- 存储与中间件：MySQL、Redis Stack、RabbitMQ。
-- 部署：Docker Compose、本地容器化、GitHub Actions、AWS ECR、ECS、S3。
+![GoNexus デモ](./assets/ezgif-1fbf6f6bb015c1ad.gif)
 
 ---
 
-## 架构图
+## 技術スタック
 
-![GoNexus 架构图](./assets/59_13.png)
-
----
-
-## 核心功能
-
-- **实时聊天**：使用 Server-Sent Events（SSE）实现 AI 回答的流式输出。
-- **RAG 支持**：支持上传文档，结合本地知识内容增强 AI 回答。
-- **会话管理**：聊天历史持久化存储在 MySQL 中，并支持跨会话同步。
-- **多模型支持**：通过后端统一接口，可以方便地切换不同的 AI 模型服务提供商。
-
-![GoNexus 功能图](./assets/1_J7vyY3EjY46AlduMvr9FbQ.png)
+- フロントエンド：React、TypeScript、Vite、Tailwind CSS、Zustand、Axios。
+- バックエンド：Go、Gin、JWT、Eino、OpenAI 互換モデル API。
+- ストレージとミドルウェア：MySQL、Redis Stack、RabbitMQ。
+- デプロイ：Docker Compose、ローカルコンテナ、GitHub Actions、AWS ECR、ECS、S3。
 
 ---
 
-## AWS 架构
+## アーキテクチャ
 
-![GoNexus AWS 架构图](./assets/awsstructure.png)
-
----
-
-## 内容导航
-
-| 章节 | 关键内容 | 状态 |
-| ---- | -------- | ---- |
-| [01. 用户认证](./docs/zh/01.%E7%94%A8%E6%88%B7%E8%AE%A4%E8%AF%81.md) | 登录请求、账号密码校验、JWT 生成与返回 | ✅ |
-| [02. 聊天链路](./docs/zh/02.%E8%81%8A%E5%A4%A9%E9%93%BE%E8%B7%AF.md) | SSE 流式聊天、AIHelper、模型调用、前端更新 | ✅ |
-| [03. 会话与消息持久化](./docs/zh/03.%E4%BC%9A%E8%AF%9D%E4%B8%8E%E6%B6%88%E6%81%AF%E6%8C%81%E4%B9%85%E5%8C%96.md) | 内存上下文、RabbitMQ 异步保存、DAO 写入 MySQL | ✅ |
-| [04. RAG 知识库链路](./docs/zh/04.RAG%E7%9F%A5%E8%AF%86%E5%BA%93%E9%93%BE%E8%B7%AF.md) | 文档上传、chunk 切分、embedding、Redis 向量检索 | ✅ |
-| [05. 图片识别链路](./docs/zh/05.%E5%9B%BE%E7%89%87%E8%AF%86%E5%88%AB%E9%93%BE%E8%B7%AF.md) | 图片上传、base64 转换、Vision API 调用与结果返回 | ✅ |
-| [06. Docker 部署链路](./docs/zh/06.Docker%E9%83%A8%E7%BD%B2%E9%93%BE%E8%B7%AF.md) | Compose 启动、镜像构建、容器通信、Nginx 代理 | ✅ |
+![GoNexus アーキテクチャ図](./assets/59_13.png)
 
 ---
 
-## 快速开始
+## 主な機能
 
-### 1. 启动基础设施
+- **リアルタイムチャット**：Server-Sent Events（SSE）で AI 回答をストリーミング出力します。
+- **RAG 対応**：文書アップロードに対応し、ローカルナレッジで AI 回答を強化します。
+- **セッション管理**：チャット履歴を MySQL に永続化し、複数セッションの同期に対応します。
+- **マルチモデル対応**：バックエンドの統一インターフェースから複数の AI モデルプロバイダーを切り替えられます。
 
-请确保已经安装并启动 Docker，然后运行以下命令启动项目所需服务：
+![GoNexus 機能図](./assets/1_J7vyY3EjY46AlduMvr9FbQ.png)
+
+---
+
+## AWS アーキテクチャ
+
+![GoNexus AWS アーキテクチャ図](./assets/awsstructure.png)
+
+---
+
+## 目次
+
+| 章 | 主な内容 | 状態 |
+| -- | -------- | ---- |
+| [01. ユーザー認証](./docs/ja/01.%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E8%AA%8D%E8%A8%BC.md) | ログインリクエスト、認証情報検証、JWT 生成と返却 | ✅ |
+| [02. チャット連携](./docs/ja/02.%E3%83%81%E3%83%A3%E3%83%83%E3%83%88%E9%80%A3%E6%90%BA.md) | SSE ストリーミングチャット、AIHelper、モデル呼び出し、フロント更新 | ✅ |
+| [03. 会話とメッセージ永続化](./docs/ja/03.%E4%BC%9A%E8%A9%B1%E3%81%A8%E3%83%A1%E3%83%83%E3%82%BB%E3%83%BC%E3%82%B8%E6%B0%B8%E7%B6%9A%E5%8C%96.md) | メモリコンテキスト、RabbitMQ 非同期保存、DAO による MySQL 書き込み | ✅ |
+| [04. RAG ナレッジベース連携](./docs/ja/04.RAG%E3%83%8A%E3%83%AC%E3%83%83%E3%82%B8%E3%83%99%E3%83%BC%E3%82%B9%E9%80%A3%E6%90%BA.md) | 文書アップロード、chunk 分割、embedding、Redis ベクトル検索 | ✅ |
+| [05. 画像認識連携](./docs/ja/05.%E7%94%BB%E5%83%8F%E8%AA%8D%E8%AD%98%E9%80%A3%E6%90%BA.md) | 画像アップロード、base64 変換、Vision API 呼び出しと結果返却 | ✅ |
+| [06. Docker デプロイ連携](./docs/ja/06.Docker%E3%83%87%E3%83%97%E3%83%AD%E3%82%A4%E9%80%A3%E6%90%BA.md) | Compose 起動、image build、container 通信、Nginx proxy | ✅ |
+
+---
+
+## クイックスタート
+
+### 1. インフラを起動
+
+Docker がインストールされ、起動していることを確認してから、必要なサービスを起動します。
 
 ```bash
 cd GoNexus
 docker-compose up -d
 ```
 
-### 2. 配置并启动后端
+### 2. バックエンドを設定して起動
 
-1. 将 `GoNexus/config/config.example.toml` 复制为 `GoNexus/config/config.toml`，并填写本地环境所需配置。请勿将 `config.toml` 提交到 Git 仓库。
-2. 安装依赖并启动后端：
+1. `GoNexus/config/config.example.toml` を `GoNexus/config/config.toml` にコピーし、ローカル環境に必要な設定を入力します。`config.toml` は Git にコミットしないでください。
+2. 依存関係をインストールしてバックエンドを起動します。
 
 ```bash
 go mod tidy
 go run main.go
 ```
 
-云端部署时，可以通过环境变量注入配置，例如：
+クラウドデプロイでは、次のような環境変数で設定を注入できます。
 
-`GONEXUS_MYSQL_HOST`、`GONEXUS_REDIS_HOST`、`GONEXUS_RABBITMQ_HOST`、`GONEXUS_JWT_KEY`、`LLM_API_KEY`、`LLM_MODEL_ID` 和 `LLM_BASE_URL`。
+`GONEXUS_MYSQL_HOST`、`GONEXUS_REDIS_HOST`、`GONEXUS_RABBITMQ_HOST`、`GONEXUS_JWT_KEY`、`LLM_API_KEY`、`LLM_MODEL_ID`、`LLM_BASE_URL`。
 
-### 3. 配置并启动前端
+### 3. フロントエンドを設定して起動
 
-1. 进入 `GoNexus/frontend` 目录。
-2. 安装依赖并启动开发服务器：
+1. `GoNexus/frontend` ディレクトリへ移動します。
+2. 依存関係をインストールし、開発サーバーを起動します。
 
 ```bash
 npm install
@@ -98,12 +98,12 @@ npm run dev
 
 ---
 
-## 参与贡献
+## コントリビューション
 
-欢迎提交 Issue 或 Pull Request。
+Issue と Pull Request を歓迎します。
 
 ---
 
-## 开源协议
+## ライセンス
 
-本项目基于 GNU General Public License v3.0 开源协议发布。
+このプロジェクトは GNU General Public License v3.0 のもとで公開されています。

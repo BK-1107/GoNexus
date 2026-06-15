@@ -3,8 +3,8 @@
 GoNexus is an AI chat platform designed to connect user authentication, session management, streaming AI chat, a local RAG knowledge base, image recognition, and cloud deployment into one complete application.
 
 <p align="left">
-  <a href="../../README.md">中文</a> |
-  <a href="../ja/README.md">日本語</a> |
+  <a href="../../README_cn.md">中文</a> |
+  <a href="../../README.md">日本語</a> |
   <strong>English</strong>
 </p>
 

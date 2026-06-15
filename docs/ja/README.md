@@ -3,7 +3,7 @@
 GoNexus は、ユーザー認証、セッション管理、ストリーミング AI チャット、ローカル RAG ナレッジベース、画像認識、クラウドデプロイを 1 つにまとめた AI チャットプラットフォームです。
 
 <p align="left">
-  <a href="../../README.md">中文</a> |
+  <a href="../../README_cn.md">中文</a> |
   <strong>日本語</strong> |
   <a href="../en/README.md">English</a>
 </p>
