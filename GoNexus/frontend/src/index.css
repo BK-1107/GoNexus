@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-foreground antialiased selection:bg-secondary;
+    font-family: 'Space Grotesk', sans-serif;
+    background-color: #ffffff;
+  }
+}
+
+@layer utilities {
+  .halftone-bg {
+    background-image: radial-gradient(#000000 1.5px, transparent 1.5px);
+    background-size: 16px 16px;
+  }
+
+  .comic-card {
+    @apply bg-white border-4 border-black shadow-brutal transition-transform duration-100;
+  }
+  
+  .comic-card:hover {
+    @apply -translate-y-1 -translate-x-1 shadow-brutal-hover;
+  }
+
+  .comic-btn {
+    @apply font-bold border-4 border-black shadow-brutal transition-all duration-100 flex items-center justify-center bg-primary text-black;
+  }
+
+  .comic-btn:active {
+    @apply translate-y-1 translate-x-1 shadow-brutal-active;
+  }
+  
+  .comic-input {
+    @apply bg-white border-4 border-black focus:outline-none focus:bg-secondary/10 transition-colors px-4 py-3 shadow-[inset_2px_2px_0px_rgba(0,0,0,0.1)];
+  }
+}
