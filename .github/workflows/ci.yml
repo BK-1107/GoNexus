@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  ci:
+    name: Build And Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: GoNexus/go.mod
+          cache-dependency-path: GoNexus/go.sum
+
+      - name: Test backend
+        working-directory: GoNexus
+        run: go test -tags=nomsgpack -ldflags=-checklinkname=0 ./...
+
+      - name: Build backend
+        working-directory: GoNexus
+        run: go build -tags=nomsgpack -trimpath -ldflags=-checklinkname=0 -o /tmp/gonexus .
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: GoNexus/frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: GoNexus/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: GoNexus/frontend
+        run: npm run build
+
+      - name: Build backend Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v6
+        with:
+          context: GoNexus
+          file: GoNexus/Dockerfile
+          push: false
+          tags: gonexus-backend:ci
+
+      - name: Build frontend Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        uses: docker/build-push-action@v6
+        with:
+          context: GoNexus/frontend
+          file: GoNexus/frontend/Dockerfile
+          push: false
+          tags: gonexus-frontend:ci
