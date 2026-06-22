@@ -5,6 +5,7 @@ import { apiUrl } from '@/api/base'
 
 export function useStreaming() {
   const token = useAuthStore((state) => state.token)
+  const logout = useAuthStore((state) => state.logout)
   const { addMessage, updateLastMessage, setIsStreaming, setCurrentSessionId } = useChatStore()
   const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -38,6 +39,18 @@ export function useStreaming() {
         body: JSON.stringify(body),
         signal: controller.signal
       })
+
+      if (response.headers.get('content-type')?.includes('application/json')) {
+        const payload = await response.json()
+        if (payload?.status_code === 2006) {
+          logout()
+          const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
+          window.location.assign(`/auth?returnTo=${encodeURIComponent(returnTo)}`)
+          return
+        }
+        updateLastMessage(`Error: ${payload?.status_msg || 'AI request failed.'}`)
+        return
+      }
 
       if (!response.body) return
 

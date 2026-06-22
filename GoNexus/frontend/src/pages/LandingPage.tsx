@@ -33,7 +33,7 @@ export function LandingPage() {
             </motion.a>
           ))}
           <div className="flex gap-4 ml-4">
-            <Link to="/chat" className="comic-btn px-6 py-2 bg-secondary text-black">Login</Link>
+            <Link to="/auth" className="comic-btn px-6 py-2 bg-secondary text-black">Login</Link>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link to="/chat" className="comic-btn px-6 py-2 bg-primary text-black">Start Free</Link>
             </motion.div>

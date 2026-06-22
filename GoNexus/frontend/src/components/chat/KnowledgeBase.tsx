@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom"
 import { fileApi } from "@/api/file"
 import { useChatStore } from "@/store/chatStore"
 import { NeoConfirm } from "@/components/ui/NeoConfirm"
+import { useRequireAuth } from "@/hooks/useRequireAuth"
+import { useAuthStore } from "@/store/authStore"
 
 export function KnowledgeBase() {
   const navigate = useNavigate()
@@ -13,8 +15,11 @@ export function KnowledgeBase() {
   const [error, setError] = useState<string | null>(null)
   const [fileToDelete, setFileToDelete] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const requireAuth = useRequireAuth()
+  const token = useAuthStore((state) => state.token)
   
   const { modelType, setModelType, uploadedFiles, addUploadedFile, removeUploadedFile } = useChatStore()
+  const visibleUploadedFiles = token ? uploadedFiles : []
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0]
@@ -27,6 +32,7 @@ export function KnowledgeBase() {
 
   const handleUpload = async () => {
     if (!file) return
+    if (!requireAuth()) return
     setStatus('uploading')
     try {
       const res = await fileApi.upload(file)
@@ -50,6 +56,7 @@ export function KnowledgeBase() {
 
   const confirmDeleteFile = async () => {
     if (!fileToDelete) return
+    if (!requireAuth()) return
     try {
       const res = await fileApi.deleteKnowledge(fileToDelete)
       if (res.data?.status_code === 1000) {
@@ -60,6 +67,16 @@ export function KnowledgeBase() {
     } finally {
       setFileToDelete(null)
     }
+  }
+
+  const handleModelChange = (type: string) => {
+    if (!requireAuth()) return
+    setModelType(type)
+  }
+
+  const requestDeleteFile = (filename: string) => {
+    if (!requireAuth()) return
+    setFileToDelete(filename)
   }
 
   return (
@@ -93,7 +110,7 @@ export function KnowledgeBase() {
           </h2>
           <div className="flex flex-col gap-4">
             <button 
-              onClick={() => setModelType('1')}
+              onClick={() => handleModelChange('1')}
               className={`p-4 border-4 border-black text-left transition-all ${
                 modelType === '1' ? 'bg-primary shadow-brutal translate-x-[-2px] translate-y-[-2px]' : 'bg-white hover:bg-muted'
               }`}
@@ -102,7 +119,7 @@ export function KnowledgeBase() {
               <p className="text-xs font-bold opacity-60 uppercase">General knowledge & reasoning</p>
             </button>
             <button 
-              onClick={() => setModelType('2')}
+              onClick={() => handleModelChange('2')}
               className={`p-4 border-4 border-black text-left transition-all ${
                 modelType === '2' ? 'bg-primary shadow-brutal translate-x-[-2px] translate-y-[-2px]' : 'bg-white hover:bg-muted'
               }`}
@@ -185,24 +202,24 @@ export function KnowledgeBase() {
 
       {/* Uploaded Files List */}
       <AnimatePresence>
-        {uploadedFiles.length > 0 && (
+        {visibleUploadedFiles.length > 0 && (
           <motion.div 
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             className="comic-card p-6 bg-white space-y-4"
           >
             <h3 className="font-black uppercase flex items-center gap-2 text-primary">
-              <CheckCircle2 size={18} /> Injected Documents ({uploadedFiles.length})
+              <CheckCircle2 size={18} /> Injected Documents ({visibleUploadedFiles.length})
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {uploadedFiles.map((name, idx) => (
+              {visibleUploadedFiles.map((name, idx) => (
                 <div key={idx} className="flex items-center justify-between p-3 bg-muted border-2 border-black group">
                   <div className="flex items-center gap-3 overflow-hidden">
                     <FileText size={16} className="shrink-0" />
                     <span className="text-sm font-bold truncate">{name}</span>
                   </div>
                   <button 
-                    onClick={() => setFileToDelete(name)}
+                    onClick={() => requestDeleteFile(name)}
                     className="p-1 hover:text-destructive transition-colors"
                   >
                     <Trash2 size={16} />

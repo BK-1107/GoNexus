@@ -6,12 +6,19 @@ import { useState } from "react"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { useAuthStore } from "@/store/authStore"
+import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 export function MessageList() {
   const { messages, removeMessage } = useChatStore()
+  const token = useAuthStore((state) => state.token)
+  const requireAuth = useRequireAuth()
   const [deletingKey, setDeletingKey] = useState<string | null>(null)
+  const visibleMessages = token ? messages : []
 
   const handleDeleteMessage = async (index: number, messageId?: number) => {
+    if (!requireAuth()) return
+
     const deleteKey = messageId ? String(messageId) : `local-${index}`
     if (deletingKey) return
 
@@ -34,13 +41,13 @@ export function MessageList() {
   return (
     <div className="flex-1 overflow-y-auto px-6 py-8 halftone-bg scroll-smooth">
       <div className="max-w-4xl mx-auto space-y-10">
-        {messages.length === 0 ? (
+        {visibleMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full opacity-30 select-none">
             <h2 className="text-4xl font-black uppercase tracking-widest text-black/20">Empty Space</h2>
             <p className="font-bold uppercase mt-4">Start a conversation below</p>
           </div>
         ) : (
-          messages.map((msg, i) => (
+          visibleMessages.map((msg, i) => (
             <motion.div
               key={msg.id ?? `${msg.role}-${i}`}
               initial={{ opacity: 0, y: 20 }}

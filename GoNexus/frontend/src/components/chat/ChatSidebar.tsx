@@ -1,21 +1,29 @@
-import { MessageSquare, Plus, Settings, Home, LogOut, Trash2, Database, Zap } from "lucide-react"
+import { MessageSquare, Plus, Settings, Home, LogIn, LogOut, Trash2, Database, Zap } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useEffect, useState, useRef } from "react"
 import { useChatStore } from "@/store/chatStore"
 import { useAuthStore } from "@/store/authStore"
 import { chatApi } from "@/api/chat"
 import { NeoConfirm } from "@/components/ui/NeoConfirm"
+import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 export function ChatSidebar() {
   const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType } = useChatStore()
-  const { logout, username } = useAuthStore()
+  const { logout, username, token } = useAuthStore()
+  const requireAuth = useRequireAuth()
   
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteTitle, setDeleteTitle] = useState("")
   const initialSyncRef = useRef(false)
+  const visibleSessions = token ? sessions : []
 
   // 加载会话列表
   useEffect(() => {
+    if (!token) {
+      initialSyncRef.current = false
+      return
+    }
+
     const fetchSessions = async () => {
       console.log(`[Sidebar] Fetching sessions... Restored ID: ${currentSessionId}`)
       try {
@@ -33,10 +41,12 @@ export function ChatSidebar() {
       }
     }
     fetchSessions()
-  }, [setSessions])
+  }, [setSessions, token])
 
   // [优化] 自动恢复/选中逻辑：处理新浏览器登录或刷新后 currentSessionId 为空的情况
   useEffect(() => {
+    if (!token) return
+
     const autoSelect = async () => {
       // 1. 如果有 ID 但没同步过（刷新场景），执行静默同步
       if (currentSessionId && !initialSyncRef.current) {
@@ -56,7 +66,7 @@ export function ChatSidebar() {
       }
     }
     autoSelect()
-  }, [sessions, currentSessionId])
+  }, [sessions, currentSessionId, token])
 
   const loadSessionHistory = async (sessionId: string) => {
     try {
@@ -75,18 +85,21 @@ export function ChatSidebar() {
   }
 
   const handleSessionSelect = (sessionId: string) => {
+    if (!requireAuth()) return
     if (sessionId === currentSessionId && messages.length > 0) return
     setCurrentSessionId(sessionId)
     loadSessionHistory(sessionId)
   }
 
   const handleNewChat = () => {
+    if (!requireAuth()) return
     setCurrentSessionId(null)
     setMessages([])
   }
 
   const openDeleteModal = (e: React.MouseEvent, s: any) => {
     e.stopPropagation()
+    if (!requireAuth()) return
     setDeleteId(s.id)
     setDeleteTitle(s.title || "Untitled Chat")
   }
@@ -158,10 +171,10 @@ export function ChatSidebar() {
         </div>
         
         <div className="flex flex-col gap-3">
-          {sessions.length === 0 ? (
+          {visibleSessions.length === 0 ? (
             <div className="text-center py-8 font-bold text-black/30 italic uppercase">No Sessions Yet</div>
           ) : (
-            sessions.map((s) => (
+            visibleSessions.map((s) => (
               <div key={s.id} className="group relative">
                 <button 
                   onClick={() => handleSessionSelect(s.id)}
@@ -197,10 +210,11 @@ export function ChatSidebar() {
             <Settings size={18} strokeWidth={3} />
           </button>
           <button 
-            onClick={logout}
+            onClick={() => token ? logout() : requireAuth()}
+            title={token ? "Log out" : "Log in"}
             className="flex-1 flex items-center justify-center gap-2 py-3 bg-[#ef4444] text-black border-4 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
           >
-            <LogOut size={18} strokeWidth={3} />
+            {token ? <LogOut size={18} strokeWidth={3} /> : <LogIn size={18} strokeWidth={3} />}
           </button>
         </div>
       </div>

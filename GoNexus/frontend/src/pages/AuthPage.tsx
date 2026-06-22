@@ -1,9 +1,9 @@
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { useAuthStore } from "@/store/authStore"
 import axios from "axios"
 import { apiUrl } from "@/api/base"
-import { Shield, User, Lock, ArrowRight, Mail, KeyRound } from "lucide-react"
+import { Shield, User, Lock, ArrowLeft, ArrowRight, Mail, KeyRound } from "lucide-react"
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -17,6 +17,11 @@ export function AuthPage() {
   const [isSendingCaptcha, setIsSendingCaptcha] = useState(false)
   const setAuth = useAuthStore((state) => state.setAuth)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedPath = searchParams.get("returnTo")
+  const returnTo = requestedPath?.startsWith("/") ? requestedPath : "/"
+
+  const handleBack = () => navigate(returnTo)
 
   const handleInviteCheck = async () => {
     setError("")
@@ -65,7 +70,7 @@ export function AuthPage() {
       if (res.data?.status_code === 1000) {
         const token = res.data.token
         setAuth(token, isLogin ? username : email)
-        navigate("/chat")
+        navigate(requestedPath?.startsWith("/") ? requestedPath : "/chat", { replace: true })
       } else {
         setError(res.data?.status_msg || "Action failed")
       }
@@ -89,6 +94,23 @@ export function AuthPage() {
         <div className="absolute -top-6 -left-6 bg-primary border-4 border-black px-4 py-2 font-black uppercase text-xl shadow-brutal transform -rotate-3">
           {isLogin ? "Welcome Back!" : inviteVerified ? "Join Us!" : "Invite Only"}
         </div>
+
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="Back"
+          title="Back"
+          className="group absolute right-3 -top-2 z-20 flex h-24 w-20 -rotate-6 flex-col items-center justify-center bg-transparent transition-all hover:-translate-x-1 hover:rotate-6 active:scale-90"
+        >
+          <ArrowLeft
+            size={56}
+            strokeWidth={5}
+            className="-rotate-12 text-[#ef4444] drop-shadow-[2px_2px_0_#000] transition-transform group-hover:-rotate-3"
+          />
+          <span className="mt-1 -rotate-3 text-lg font-black italic uppercase leading-none tracking-wide text-black transition-transform group-hover:rotate-2">
+            Back
+          </span>
+        </button>
 
         <div className="text-center space-y-2 pt-4">
           <div className="inline-block bg-secondary border-4 border-black p-3 rounded-full mb-2">
