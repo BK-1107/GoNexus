@@ -1,12 +1,7 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+  workflow_dispatch:
 
 jobs:
   ci:
@@ -46,7 +41,6 @@ jobs:
         run: npm run build
 
       - name: Build backend Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v6
         with:
           context: GoNexus
@@ -55,7 +49,6 @@ jobs:
           tags: gonexus-backend:ci
 
       - name: Build frontend Docker image
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v6
         with:
           context: GoNexus/frontend
