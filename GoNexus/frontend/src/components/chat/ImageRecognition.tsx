@@ -2,6 +2,7 @@ import { Upload, Image as ImageIcon, X, Loader2, CheckCircle2, Zap, Search, Info
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { imageApi } from "@/api/image"
+import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 interface ImageMeta {
   name: string
@@ -18,6 +19,7 @@ export function ImageRecognition() {
   const [backendResult, setBackendResult] = useState<string | null>(null)
   const [meta, setMeta] = useState<ImageMeta | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const requireAuth = useRequireAuth()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -45,6 +47,7 @@ export function ImageRecognition() {
 
   const handleStartAnalysis = async () => {
     if (!selectedFile || status !== 'idle') return
+    if (!requireAuth()) return
     
     setStatus('analyzing')
     try {

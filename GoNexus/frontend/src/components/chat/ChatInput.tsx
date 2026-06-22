@@ -2,14 +2,17 @@ import { Send, Square } from "lucide-react"
 import { useState } from "react"
 import { useChatStore } from "@/store/chatStore"
 import { useStreaming } from "@/hooks/useStreaming"
+import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 export function ChatInput() {
   const [content, setContent] = useState("")
   const { currentSessionId, isStreaming, modelType } = useChatStore()
   const { startStream, stopStream } = useStreaming()
+  const requireAuth = useRequireAuth()
 
   const handleSend = async () => {
     if (!content.trim() || isStreaming) return
+    if (!requireAuth()) return
 
     const messageContent = content
     setContent("")
