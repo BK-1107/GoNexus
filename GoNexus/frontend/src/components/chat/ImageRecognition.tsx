@@ -45,6 +45,11 @@ export function ImageRecognition() {
     }
   }
 
+  const handleSelectImage = () => {
+    if (!requireAuth()) return
+    fileInputRef.current?.click()
+  }
+
   const handleStartAnalysis = async () => {
     if (!selectedFile || status !== 'idle') return
     if (!requireAuth()) return
@@ -98,7 +103,7 @@ export function ImageRecognition() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="bg-white border-4 border-black border-dashed p-12 flex flex-col items-center justify-center cursor-pointer hover:bg-secondary/20 transition-all"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleSelectImage}
           >
             <div className="bg-primary p-4 border-4 border-black shadow-brutal mb-4">
               <Upload size={48} />

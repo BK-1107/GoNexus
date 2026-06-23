@@ -30,6 +30,11 @@ export function KnowledgeBase() {
     }
   }
 
+  const handleSelectFile = () => {
+    if (!requireAuth()) return
+    fileInputRef.current?.click()
+  }
+
   const handleUpload = async () => {
     if (!file) return
     if (!requireAuth()) return
@@ -148,7 +153,7 @@ export function KnowledgeBase() {
           />
 
           <div 
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleSelectFile}
             className="border-4 border-black border-dashed bg-white p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-primary/20 transition-all group"
           >
             {file ? (
