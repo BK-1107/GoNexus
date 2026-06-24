@@ -37,6 +37,9 @@ GoNexus/uploads/
 
 # Config and Secrets
 *.env
+.env.*
+!.env.example
+!.env.*.example
 *.env.local
 *.env.*.local
 GoNexus/config/config.toml
@@ -64,6 +67,7 @@ GoNexus/main
 *.7z
 
 # Go specific
+*.test
 .gocache/
 .gocache-cors/
 .gocache-*/
@@ -77,6 +81,7 @@ go.work.sum
 vendor/
 
 # Node/Frontend specific
+coverage/
 .eslintcache
 .stylelintcache
 .cache/
