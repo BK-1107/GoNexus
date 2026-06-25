@@ -32,25 +32,25 @@ const (
 var msg = map[Code]string{
 	CodeSuccess: "success",
 
-	CodeInvalidParams:    "请求参数错误",
-	CodeUserExist:        "用户名已存在",
-	CodeUserNotExist:     "用户不存在",
-	CodeInvalidPassword:  "用户名或密码错误",
-	CodeNotMatchPassword: "两次密码不一致",
-	CodeInvalidToken:     "无效的Token",
-	CodeNotLogin:         "用户未登录",
-	CodeInvalidCaptcha:   "验证码错误",
-	CodeRecordNotFound:   "记录不存在",
-	CodeIllegalPassword:  "密码不合法",
+	CodeInvalidParams:    "Invalid request parameters",
+	CodeUserExist:        "Username already exists",
+	CodeUserNotExist:     "User does not exist",
+	CodeInvalidPassword:  "Invalid username or password",
+	CodeNotMatchPassword: "Passwords do not match",
+	CodeInvalidToken:     "Invalid or expired token",
+	CodeNotLogin:         "Please log in first",
+	CodeInvalidCaptcha:   "Invalid captcha",
+	CodeRecordNotFound:   "Record not found",
+	CodeIllegalPassword:  "Invalid password format",
 
-	CodeForbidden: "权限不足",
+	CodeForbidden: "Permission denied",
 
-	CodeServerBusy: "服务繁忙",
+	CodeServerBusy: "Service is busy",
 
-	AIModelNotFind:    "模型不存在",
-	AIModelCannotOpen: "无法打开模型",
-	AIModelFail:       "模型运行失败",
-	TTSFail:           "语音服务失败",
+	AIModelNotFind:    "Model not found",
+	AIModelCannotOpen: "Unable to open model",
+	AIModelFail:       "Model execution failed",
+	TTSFail:           "Text-to-speech service failed",
 }
 
 func (code Code) Code() int64 {
