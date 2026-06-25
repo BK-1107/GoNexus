@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/cloudwego/eino-ext/components/embedding/openai"
@@ -60,6 +61,9 @@ func NewRAGIndexer(indexID string) (*RAGIndexer, error) {
 
 	// 初始化 Redis Search 向量索引，dimension 必须和 embedding 模型输出维度一致。
 	dimension := config.GetConfig().GetEmbeddingDimension()
+	if err := recreateIndexIfDimensionChanged(ctx, indexID, dimension); err != nil {
+		return nil, err
+	}
 	if err := redisPkg.InitRedisIndex(ctx, indexID, dimension); err != nil {
 		return nil, fmt.Errorf("failed to init redis index: %w", err)
 	}
@@ -94,6 +98,83 @@ func NewRAGIndexer(indexID string) (*RAGIndexer, error) {
 		embedding: embedder,
 		indexer:   idx,
 	}, nil
+}
+
+func recreateIndexIfDimensionChanged(ctx context.Context, indexID string, dimension int) error {
+	indexName := redis.GenerateIndexName(indexID)
+	info, err := redisPkg.Rdb.Do(ctx, "FT.INFO", indexName).Result()
+	if err != nil {
+		if strings.Contains(err.Error(), "Unknown index name") {
+			return nil
+		}
+		return fmt.Errorf("failed to inspect redis index: %w", err)
+	}
+
+	existingDimension, ok := redisVectorDimension(info)
+	if !ok || existingDimension == dimension {
+		return nil
+	}
+
+	if err := redisPkg.Rdb.Do(ctx, "FT.DROPINDEX", indexName).Err(); err != nil {
+		return fmt.Errorf("failed to drop incompatible redis index: %w", err)
+	}
+	return nil
+}
+
+func redisVectorDimension(info interface{}) (int, bool) {
+	items, ok := info.([]interface{})
+	if !ok {
+		return 0, false
+	}
+
+	for i := 0; i < len(items)-1; i += 2 {
+		key, _ := items[i].(string)
+		if key != "attributes" {
+			continue
+		}
+
+		attributes, ok := items[i+1].([]interface{})
+		if !ok {
+			return 0, false
+		}
+
+		for _, rawAttribute := range attributes {
+			attribute, ok := rawAttribute.([]interface{})
+			if !ok || !isRedisVectorAttribute(attribute) {
+				continue
+			}
+
+			for j := 0; j < len(attribute)-1; j += 2 {
+				fieldKey, _ := attribute[j].(string)
+				if !strings.EqualFold(fieldKey, "dim") {
+					continue
+				}
+
+				switch value := attribute[j+1].(type) {
+				case int:
+					return value, true
+				case int64:
+					return int(value), true
+				case string:
+					parsed, err := strconv.Atoi(value)
+					return parsed, err == nil
+				}
+			}
+		}
+	}
+
+	return 0, false
+}
+
+func isRedisVectorAttribute(attribute []interface{}) bool {
+	for i := 0; i < len(attribute)-1; i += 2 {
+		fieldKey, _ := attribute[i].(string)
+		fieldValue, _ := attribute[i+1].(string)
+		if fieldKey == "identifier" && fieldValue == "vector" {
+			return true
+		}
+	}
+	return false
 }
 
 // IndexFile 读取上传文件内容，切分成多个 chunk 后写入 Redis 向量索引。

@@ -29,6 +29,7 @@ interface ChatState {
   removeMessage: (index: number, id?: number) => void
   updateLastMessage: (content: string) => void
   updateLastAssistantMessage: (content: string) => void
+  updateLastAssistantMessageForSession: (sessionId: string, content: string) => void
   setIsStreaming: (isStreaming: boolean) => void
   setModelType: (type: string) => void
   addUploadedFile: (filename: string) => void
@@ -77,6 +78,22 @@ export const useChatStore = create<ChatState>()(
         return { messages: newMessages }
       }),
       updateLastAssistantMessage: (content) => set((state) => {
+        const newMessages = [...state.messages]
+        const assistantIndex = [...newMessages].reverse().findIndex((message) => message.role === 'assistant')
+        if (assistantIndex === -1) return { messages: newMessages }
+
+        const index = newMessages.length - 1 - assistantIndex
+        newMessages[index] = {
+          ...newMessages[index],
+          content,
+        }
+        return { messages: newMessages }
+      }),
+      updateLastAssistantMessageForSession: (sessionId, content) => set((state) => {
+        if (state.currentSessionId !== sessionId) {
+          return state
+        }
+
         const newMessages = [...state.messages]
         const assistantIndex = [...newMessages].reverse().findIndex((message) => message.role === 'assistant')
         if (assistantIndex === -1) return { messages: newMessages }

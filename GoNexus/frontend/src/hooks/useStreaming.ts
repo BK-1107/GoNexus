@@ -6,7 +6,7 @@ import { apiUrl } from '@/api/base'
 export function useStreaming() {
   const token = useAuthStore((state) => state.token)
   const logout = useAuthStore((state) => state.logout)
-  const { addMessage, updateLastAssistantMessage, setIsStreaming, setCurrentSessionId, setSessions, upsertSession } = useChatStore()
+  const { addMessage, updateLastAssistantMessage, updateLastAssistantMessageForSession, setIsStreaming, setCurrentSessionId, setSessions, upsertSession } = useChatStore()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const stopStream = () => {
@@ -25,6 +25,7 @@ export function useStreaming() {
     abortControllerRef.current = controller
     
     setIsStreaming(true)
+    let streamSessionId: string | null = body.sessionId || null
     
     addMessage({ role: 'user', content: body.question })
     addMessage({ role: 'assistant', content: '' })
@@ -48,7 +49,12 @@ export function useStreaming() {
           window.location.assign(`/auth?returnTo=${encodeURIComponent(returnTo)}`)
           return
         }
-        updateLastAssistantMessage(`Error: ${payload?.status_msg || 'AI request failed.'}`)
+        const errorMessage = `Error: ${payload?.status_msg || 'AI request failed.'}`
+        if (streamSessionId) {
+          updateLastAssistantMessageForSession(streamSessionId, errorMessage)
+        } else {
+          updateLastAssistantMessage(errorMessage)
+        }
         return
       }
 
@@ -83,6 +89,7 @@ export function useStreaming() {
               try {
                 const parsed = JSON.parse(data)
                 if (parsed.sessionId) {
+                  streamSessionId = parsed.sessionId
                   setCurrentSessionId(parsed.sessionId, true)
                   upsertSession({
                     id: parsed.sessionId,
@@ -97,18 +104,29 @@ export function useStreaming() {
             }
 
             if (currentEvent === 'error') {
+              let errorMessage = `Error: ${data}`
               try {
                 const parsed = JSON.parse(data)
-                updateLastAssistantMessage(`Error: ${parsed.message || 'AI request failed.'}`)
+                errorMessage = `Error: ${parsed.message || 'AI request failed.'}`
               } catch {
-                updateLastAssistantMessage(`Error: ${data}`)
+                errorMessage = `Error: ${data}`
+              }
+
+              if (streamSessionId) {
+                updateLastAssistantMessageForSession(streamSessionId, errorMessage)
+              } else {
+                updateLastAssistantMessage(errorMessage)
               }
               currentEvent = 'message'
               continue
             }
 
             accumulatedContent += data
-            updateLastAssistantMessage(accumulatedContent)
+            if (streamSessionId) {
+              updateLastAssistantMessageForSession(streamSessionId, accumulatedContent)
+            } else {
+              updateLastAssistantMessage(accumulatedContent)
+            }
             currentEvent = 'message'
           }
         }
@@ -118,7 +136,11 @@ export function useStreaming() {
         console.log('Stream aborted by user')
       } else {
         console.error('Streaming error:', error)
-        updateLastAssistantMessage('Error: Connection lost.')
+        if (streamSessionId) {
+          updateLastAssistantMessageForSession(streamSessionId, 'Error: Connection lost.')
+        } else {
+          updateLastAssistantMessage('Error: Connection lost.')
+        }
       }
     } finally {
       setIsStreaming(false)
