@@ -50,6 +50,11 @@ export function ChatSidebar() {
     const autoSelect = async () => {
       // 1. 如果有 ID 但没同步过（刷新场景），执行静默同步
       if (currentSessionId && !initialSyncRef.current) {
+        if (messages.length > 0) {
+          initialSyncRef.current = true
+          return
+        }
+
         console.log(`[Auto-Sync] Fetching latest history for: ${currentSessionId}`)
         loadSessionHistory(currentSessionId)
         initialSyncRef.current = true
@@ -66,7 +71,7 @@ export function ChatSidebar() {
       }
     }
     autoSelect()
-  }, [sessions, currentSessionId, isStreaming, token])
+  }, [sessions, currentSessionId, isStreaming, messages.length, token])
 
   const loadSessionHistory = async (sessionId: string) => {
     try {

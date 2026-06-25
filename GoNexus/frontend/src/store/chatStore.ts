@@ -22,6 +22,7 @@ interface ChatState {
   uploadedFiles: string[]
   
   setSessions: (sessions: Session[]) => void
+  upsertSession: (session: Session) => void
   setCurrentSessionId: (id: string | null, skipClear?: boolean) => void
   setMessages: (messages: Message[]) => void
   addMessage: (message: Message) => void
@@ -45,6 +46,12 @@ export const useChatStore = create<ChatState>()(
       uploadedFiles: [],
 
       setSessions: (sessions) => set({ sessions }),
+      upsertSession: (session) => set((state) => ({
+        sessions: [
+          session,
+          ...state.sessions.filter((existing) => existing.id !== session.id),
+        ],
+      })),
       setCurrentSessionId: (id, skipClear = false) => set((state) => ({ 
         currentSessionId: id, 
         messages: skipClear ? state.messages : [] 

@@ -6,7 +6,7 @@ import { apiUrl } from '@/api/base'
 export function useStreaming() {
   const token = useAuthStore((state) => state.token)
   const logout = useAuthStore((state) => state.logout)
-  const { addMessage, updateLastAssistantMessage, setIsStreaming, setCurrentSessionId } = useChatStore()
+  const { addMessage, updateLastAssistantMessage, setIsStreaming, setCurrentSessionId, setSessions, upsertSession } = useChatStore()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const stopStream = () => {
@@ -84,6 +84,11 @@ export function useStreaming() {
                 const parsed = JSON.parse(data)
                 if (parsed.sessionId) {
                   setCurrentSessionId(parsed.sessionId, true)
+                  upsertSession({
+                    id: parsed.sessionId,
+                    title: body.question,
+                    updated_at: new Date().toISOString(),
+                  })
                 }
               } catch (e) {
                 console.error("Failed to parse sessionId", e)
@@ -118,6 +123,26 @@ export function useStreaming() {
     } finally {
       setIsStreaming(false)
       abortControllerRef.current = null
+
+      if (token) {
+        try {
+          const sessionsResponse = await fetch(apiUrl('/AI/chat/sessions'), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+          const payload = await sessionsResponse.json()
+          if (payload?.status_code === 1000 && payload.sessions) {
+            setSessions(payload.sessions.map((session: any) => ({
+              id: session.sessionId,
+              title: session.name,
+              updated_at: session.updatedAt,
+            })))
+          }
+        } catch (error) {
+          console.error('Failed to refresh sessions after streaming:', error)
+        }
+      }
     }
   }
 
