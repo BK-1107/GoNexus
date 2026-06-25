@@ -1,0 +1,137 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gonexus_frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - backend
+    networks:
+      - gonexus
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gonexus_backend
+    restart: unless-stopped
+    environment:
+      GONEXUS_HOST: 0.0.0.0
+      GONEXUS_PORT: 9090
+
+      GONEXUS_MYSQL_HOST: mysql
+      GONEXUS_MYSQL_PORT: 3306
+      GONEXUS_MYSQL_USER: root
+      GONEXUS_MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      GONEXUS_MYSQL_DATABASE: ${MYSQL_DATABASE:-GoNexus}
+      GONEXUS_MYSQL_CHARSET: utf8mb4
+
+      GONEXUS_REDIS_HOST: redis
+      GONEXUS_REDIS_PORT: 6379
+      GONEXUS_REDIS_DB: 0
+
+      GONEXUS_RABBITMQ_HOST: rabbitmq
+      GONEXUS_RABBITMQ_PORT: 5672
+      GONEXUS_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      GONEXUS_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      GONEXUS_RABBITMQ_VHOST: /
+
+      GONEXUS_LOG_DIR: logs
+      GONEXUS_JWT_KEY: ${GONEXUS_JWT_KEY}
+      GONEXUS_REGISTER_SECRET: ${GONEXUS_REGISTER_SECRET:-}
+      GONEXUS_DEFAULT_USERNAME: ${GONEXUS_DEFAULT_USERNAME:-}
+      GONEXUS_DEFAULT_PASSWORD: ${GONEXUS_DEFAULT_PASSWORD:-}
+
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL_ID: ${LLM_MODEL_ID:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_EMBEDDING_MODEL: ${LLM_EMBEDDING_MODEL:-}
+
+      CHAT_API_KEY: ${CHAT_API_KEY:-}
+      CHAT_MODEL_ID: ${CHAT_MODEL_ID:-}
+      CHAT_BASE_URL: ${CHAT_BASE_URL:-}
+
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      EMBEDDING_MODEL_ID: ${EMBEDDING_MODEL_ID:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-}
+
+      VISION_API_KEY: ${VISION_API_KEY:-}
+      VISION_MODEL_ID: ${VISION_MODEL_ID:-}
+      VISION_BASE_URL: ${VISION_BASE_URL:-}
+
+      GONEXUS_RAG_DIMENSION: ${GONEXUS_RAG_DIMENSION:-}
+      GONEXUS_RAG_DOC_DIR: ${GONEXUS_RAG_DOC_DIR:-uploads}
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - gonexus
+
+  mysql:
+    image: mysql:8.0
+    container_name: gonexus_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-GoNexus}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - gonexus
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: gonexus_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - gonexus
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: gonexus_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - gonexus
+
+networks:
+  gonexus:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  rabbitmq_data:
