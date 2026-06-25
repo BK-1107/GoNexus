@@ -6,7 +6,7 @@ import { apiUrl } from '@/api/base'
 export function useStreaming() {
   const token = useAuthStore((state) => state.token)
   const logout = useAuthStore((state) => state.logout)
-  const { addMessage, updateLastMessage, setIsStreaming, setCurrentSessionId } = useChatStore()
+  const { addMessage, updateLastAssistantMessage, setIsStreaming, setCurrentSessionId } = useChatStore()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const stopStream = () => {
@@ -48,7 +48,7 @@ export function useStreaming() {
           window.location.assign(`/auth?returnTo=${encodeURIComponent(returnTo)}`)
           return
         }
-        updateLastMessage(`Error: ${payload?.status_msg || 'AI request failed.'}`)
+        updateLastAssistantMessage(`Error: ${payload?.status_msg || 'AI request failed.'}`)
         return
       }
 
@@ -94,16 +94,16 @@ export function useStreaming() {
             if (currentEvent === 'error') {
               try {
                 const parsed = JSON.parse(data)
-                updateLastMessage(`Error: ${parsed.message || 'AI request failed.'}`)
+                updateLastAssistantMessage(`Error: ${parsed.message || 'AI request failed.'}`)
               } catch {
-                updateLastMessage(`Error: ${data}`)
+                updateLastAssistantMessage(`Error: ${data}`)
               }
               currentEvent = 'message'
               continue
             }
 
             accumulatedContent += data
-            updateLastMessage(accumulatedContent)
+            updateLastAssistantMessage(accumulatedContent)
             currentEvent = 'message'
           }
         }
@@ -113,7 +113,7 @@ export function useStreaming() {
         console.log('Stream aborted by user')
       } else {
         console.error('Streaming error:', error)
-        updateLastMessage('Error: Connection lost.')
+        updateLastAssistantMessage('Error: Connection lost.')
       }
     } finally {
       setIsStreaming(false)

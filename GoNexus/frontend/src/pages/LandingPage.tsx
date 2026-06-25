@@ -230,7 +230,6 @@ export function LandingPage() {
             {[1,2,3,4,5].map(i => <Star key={i} fill="currentColor" size={32} className="drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]" />)}
           </div>
           <h2 className="text-4xl font-black uppercase tracking-tighter">"Absolutely mind-blowing platform!"</h2>
-          <p className="text-xl font-medium">— Student Review</p>
         </div>
       </section>
 

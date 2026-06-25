@@ -8,7 +8,7 @@ import { NeoConfirm } from "@/components/ui/NeoConfirm"
 import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 export function ChatSidebar() {
-  const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType } = useChatStore()
+  const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType, isStreaming } = useChatStore()
   const { logout, username, token } = useAuthStore()
   const requireAuth = useRequireAuth()
   
@@ -45,7 +45,7 @@ export function ChatSidebar() {
 
   // [优化] 自动恢复/选中逻辑：处理新浏览器登录或刷新后 currentSessionId 为空的情况
   useEffect(() => {
-    if (!token) return
+    if (!token || isStreaming) return
 
     const autoSelect = async () => {
       // 1. 如果有 ID 但没同步过（刷新场景），执行静默同步
@@ -66,7 +66,7 @@ export function ChatSidebar() {
       }
     }
     autoSelect()
-  }, [sessions, currentSessionId, token])
+  }, [sessions, currentSessionId, isStreaming, token])
 
   const loadSessionHistory = async (sessionId: string) => {
     try {
