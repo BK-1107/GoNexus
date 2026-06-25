@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <h1>GoNexus</h1>
   <p><b>Chat, search, analyze, recognize, and reason with multimodal AI over your private knowledge base.</b></p>
 </div>
@@ -8,7 +8,6 @@
     <td align="center"><a href="../cn/README_cn.md">中文</a> · <a href="../ja/README_ja.md">日本語</a> · <strong>English</strong></td>
   </tr>
 </table>
-
 
 <p align="center">
   <a href="../../LICENSE"><img src="../../assets/badges/license-gpl-3.0.svg" alt="License"></a>
@@ -33,6 +32,35 @@
 - Backend: Go, Gin, JWT, Eino, OpenAI-compatible model APIs.
 - Storage and middleware: MySQL, Redis Stack, RabbitMQ.
 - Deployment: Docker, GitHub Actions, AWS.
+
+---
+
+## Feature Showcase
+
+### 1. Login and Registration
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-50-32.png" width="42%" alt="GoNexus login" />
+  <img src="../../assets/Snipaste_2026-06-17_05-00-19.png" width="36%" alt="GoNexus registration" />
+</div>
+
+### 2. AI Chat
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-50-52.png" width="100%" alt="GoNexus chat" />
+</div>
+
+### 3. Private Knowledge Base Upload
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-56-04.png" width="80%" alt="GoNexus private knowledge base upload" />
+</div>
+
+### 4. Image Analysis
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-59-33.png" width="86%" alt="GoNexus image analysis" />
+</div>
 
 ---
 
@@ -65,31 +93,10 @@
 
 ---
 
-## **Feature Showcase**
-
-### 1. Login and Registration
+## ER Diagram
 
 <div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-50-32.png" width="42%" alt="GoNexus login" />
-  <img src="../../assets/Snipaste_2026-06-17_05-00-19.png" width="36%" alt="GoNexus registration" />
-</div>
-
-### 2. AI Chat
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-50-52.png" width="100%" alt="GoNexus chat" />
-</div>
-
-### 3. Private Knowledge Base Upload
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-56-04.png" width="80%" alt="GoNexus private knowledge base upload" />
-</div>
-
-### 4. Image Analysis
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-59-33.png" width="86%" alt="GoNexus image analysis" />
+  <img src="../../assets/ER.png" width="750" alt="GoNexus ER diagram" />
 </div>
 
 ---
@@ -153,13 +160,3 @@ Issues and pull requests are welcome.
 ## License
 
 This project is released under the [GNU General Public License v3.0](../../LICENSE).
-
-
-
-
-
-
-
-
-
-

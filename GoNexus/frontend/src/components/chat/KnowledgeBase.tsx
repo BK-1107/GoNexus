@@ -86,25 +86,26 @@ export function KnowledgeBase() {
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-4xl mx-auto py-8">
-      {/* Navigation */}
-      <motion.button 
-        whileHover={{ x: -5 }}
-        onClick={() => navigate('/chat')}
-        className="flex items-center gap-2 font-black uppercase text-sm self-start group"
-      >
-        <ArrowLeft size={18} />
-        <span className="group-hover:underline decoration-2">Back to Chat</span>
-      </motion.button>
-
       {/* Header */}
-      <div className="flex items-center gap-4 border-b-4 border-black pb-6">
-        <div className="bg-accent p-3 border-4 border-black shadow-brutal transform -rotate-3">
-          <Database size={40} />
+      <div className="flex items-center justify-between gap-6 border-b-4 border-black pb-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-accent p-3 border-4 border-black shadow-brutal transform -rotate-3">
+            <Database size={40} />
+          </div>
+          <div>
+            <h1 className="text-4xl font-black uppercase tracking-tighter">Knowledge Core</h1>
+            <p className="font-bold text-black/60 uppercase">Inject documentation into AI neural networks</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter">Knowledge Core</h1>
-          <p className="font-bold text-black/60 uppercase">Inject documentation into AI neural networks</p>
-        </div>
+        <motion.button
+          whileHover={{ x: -5, scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate('/chat')}
+          className="flex shrink-0 items-center gap-3 bg-destructive px-5 py-3 text-lg font-black uppercase text-white border-4 border-black shadow-[5px_5px_0px_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none group"
+        >
+          <ArrowLeft size={28} strokeWidth={5} />
+          <span className="group-hover:underline decoration-2">Back to Chat</span>
+        </motion.button>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8">

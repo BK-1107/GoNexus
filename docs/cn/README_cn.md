@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <h1>GoNexus</h1>
   <p><b>Chat, search, analyze, recognize, and reason with multimodal AI over your private knowledge base.</b></p>
 </div>
@@ -9,7 +9,6 @@
   </tr>
 </table>
 
-
 <p align="center">
   <a href="../../LICENSE"><img src="../../assets/badges/license-gpl-3.0.svg" alt="License"></a>
   <img src="../../assets/badges/go-1.24.svg" alt="Go">
@@ -19,11 +18,11 @@
   <img src="../../assets/badges/aws-cloud.svg" alt="AWS">
 </p>
 
-> 💡 GoNexus 是一个支持私有知识库增强问答的 AI 聊天平台。它可以在用户对话时检索本地上传的内部资料，并结合大模型生成更贴合业务语境的回答，同时整合了用户登录、会话管理、流式聊天、图片识别和云端部署等完整应用能力。
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-46-07.png" width="800" alt="GoNexus architecture" />
-</div>
+> 💡 GoNexus 是一个支持私有知识库增强问答的 AI 聊天平台。它可以在用户对话时检索本地上传的内部资料，并结合大模型生成更贴合业务语境的回答，同时整合了用户登录、会话管理、流式聊天、图片识别和云端部署等完整应用能力。
 
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-46-07.png" width="800" alt="GoNexus main interface" />
+</div>
 
 ---
 
@@ -33,13 +32,43 @@
 - 后端：Go、Gin、JWT、Eino、OpenAI 兼容模型接口。
 - 存储与中间件：MySQL、Redis Stack、RabbitMQ。
 - 部署：Docker、GitHub Actions、AWS。
+
+---
+
+## 功能展示
+
+### 1. 登录与注册
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-50-32.png" width="42%" alt="GoNexus login" />
+  <img src="../../assets/Snipaste_2026-06-17_05-00-19.png" width="36%" alt="GoNexus register" />
+</div>
+
+### 2. AI 对话
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-50-52.png" width="100%" alt="GoNexus chat" />
+</div>
+
+### 3. 私有知识库上传
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-56-04.png" width="80%" alt="GoNexus private knowledge upload" />
+</div>
+
+### 4. 图像分析
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-59-33.png" width="86%" alt="GoNexus image analysis" />
+</div>
+
 ---
 
 ## 架构图
+
 <div align="center">
   <img src="../../assets/59_13.png" width="1200" alt="GoNexus architecture" />
 </div>
-
 
 ---
 
@@ -49,6 +78,7 @@
 - **RAG 支持**：支持上传文档，结合本地知识内容增强 AI 回答。
 - **会话管理**：聊天历史持久化存储在 MySQL 中，并支持跨会话同步。
 - **多模型支持**：可切换不同的 AI 模型服务提供商，支持本地模型 Ollama。
+
 <div align="center">
   <img src="../../assets/1_J7vyY3EjY46AlduMvr9FbQ.png" width="86%" alt="GoNexus private knowledge upload" />
 </div>
@@ -61,32 +91,12 @@
   <img src="../../assets/awsstructure.png" width="750" alt="GoNexus AWS architecture" />
 </div>
 
-
-
 ---
 
-## **功能展示**
-
-### 1. 登录与注册
+## ER 图
 
 <div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-50-32.png" width="42%" alt="GoNexus login" />
-  <img src="../../assets/Snipaste_2026-06-17_05-00-19.png" width="36%" alt="GoNexus register" />
-</div>
-### 2. AI 对话
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-50-52.png" width="100%" alt="GoNexus chat" />
-</div>
-### 3. 私有知识库上传
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-56-04.png" width="80%" alt="GoNexus private knowledge upload" />
-</div>
-### 4. 图像分析
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-59-33.png" width="86%" alt="GoNexus image analysis" />
+  <img src="../../assets/ER.png" width="750" alt="GoNexus ER diagram" />
 </div>
 
 ---
@@ -150,10 +160,3 @@ npm run dev
 ## 开源协议
 
 本项目基于 [GNU General Public License v3.0](../../LICENSE) 开源协议发布。
-
-
-
-
-
-
-

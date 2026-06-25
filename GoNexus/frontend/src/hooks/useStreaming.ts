@@ -6,7 +6,7 @@ import { apiUrl } from '@/api/base'
 export function useStreaming() {
   const token = useAuthStore((state) => state.token)
   const logout = useAuthStore((state) => state.logout)
-  const { addMessage, updateLastAssistantMessage, updateLastAssistantMessageForSession, setIsStreaming, setCurrentSessionId, setSessions, upsertSession } = useChatStore()
+  const { addMessage, updateLastAssistantMessage, updateLastAssistantMessageForSession, setIsStreaming, setCurrentSessionId, setSessions, upsertSession, cacheSessionMessages, setStreamingSessionId } = useChatStore()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const stopStream = () => {
@@ -14,6 +14,7 @@ export function useStreaming() {
       abortControllerRef.current.abort()
       abortControllerRef.current = null
       setIsStreaming(false)
+      setStreamingSessionId(null)
     }
   }
 
@@ -26,9 +27,13 @@ export function useStreaming() {
     
     setIsStreaming(true)
     let streamSessionId: string | null = body.sessionId || null
+    setStreamingSessionId(streamSessionId)
     
     addMessage({ role: 'user', content: body.question })
     addMessage({ role: 'assistant', content: '' })
+    if (streamSessionId) {
+      cacheSessionMessages(streamSessionId, useChatStore.getState().messages)
+    }
 
     try {
       const response = await fetch(apiUrl(url), {
@@ -90,7 +95,9 @@ export function useStreaming() {
                 const parsed = JSON.parse(data)
                 if (parsed.sessionId) {
                   streamSessionId = parsed.sessionId
+                  setStreamingSessionId(parsed.sessionId)
                   setCurrentSessionId(parsed.sessionId, true)
+                  cacheSessionMessages(parsed.sessionId, useChatStore.getState().messages)
                   upsertSession({
                     id: parsed.sessionId,
                     title: body.question,
@@ -144,6 +151,7 @@ export function useStreaming() {
       }
     } finally {
       setIsStreaming(false)
+      setStreamingSessionId(null)
       abortControllerRef.current = null
 
       if (token) {

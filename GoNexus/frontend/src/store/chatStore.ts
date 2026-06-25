@@ -17,6 +17,8 @@ interface ChatState {
   sessions: Session[]
   currentSessionId: string | null
   messages: Message[]
+  sessionMessageCache: Record<string, Message[]>
+  streamingSessionId: string | null
   isStreaming: boolean
   modelType: string
   uploadedFiles: string[]
@@ -25,6 +27,8 @@ interface ChatState {
   upsertSession: (session: Session) => void
   setCurrentSessionId: (id: string | null, skipClear?: boolean) => void
   setMessages: (messages: Message[]) => void
+  cacheSessionMessages: (sessionId: string, messages: Message[]) => void
+  setStreamingSessionId: (sessionId: string | null) => void
   addMessage: (message: Message) => void
   removeMessage: (index: number, id?: number) => void
   updateLastMessage: (content: string) => void
@@ -42,6 +46,8 @@ export const useChatStore = create<ChatState>()(
       sessions: [],
       currentSessionId: null,
       messages: [],
+      sessionMessageCache: {},
+      streamingSessionId: null,
       isStreaming: false,
       modelType: '1',
       uploadedFiles: [],
@@ -58,6 +64,13 @@ export const useChatStore = create<ChatState>()(
         messages: skipClear ? state.messages : [] 
       })),
       setMessages: (messages) => set({ messages }),
+      cacheSessionMessages: (sessionId, messages) => set((state) => ({
+        sessionMessageCache: {
+          ...state.sessionMessageCache,
+          [sessionId]: messages,
+        },
+      })),
+      setStreamingSessionId: (streamingSessionId) => set({ streamingSessionId }),
       addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
       removeMessage: (index, id) => set((state) => ({
         messages: state.messages.filter((message, messageIndex) => {
@@ -90,20 +103,37 @@ export const useChatStore = create<ChatState>()(
         return { messages: newMessages }
       }),
       updateLastAssistantMessageForSession: (sessionId, content) => set((state) => {
-        if (state.currentSessionId !== sessionId) {
-          return state
-        }
-
-        const newMessages = [...state.messages]
+        const cachedMessages = state.sessionMessageCache[sessionId] || []
+        const sourceMessages = cachedMessages.length > 0 ? cachedMessages : state.messages
+        const newMessages = [...sourceMessages]
         const assistantIndex = [...newMessages].reverse().findIndex((message) => message.role === 'assistant')
-        if (assistantIndex === -1) return { messages: newMessages }
+        if (assistantIndex === -1) {
+          return {
+            sessionMessageCache: {
+              ...state.sessionMessageCache,
+              [sessionId]: newMessages,
+            },
+          }
+        }
 
         const index = newMessages.length - 1 - assistantIndex
         newMessages[index] = {
           ...newMessages[index],
           content,
         }
-        return { messages: newMessages }
+        const nextCache = {
+          ...state.sessionMessageCache,
+          [sessionId]: newMessages,
+        }
+
+        if (state.currentSessionId !== sessionId) {
+          return { sessionMessageCache: nextCache }
+        }
+
+        return {
+          messages: newMessages,
+          sessionMessageCache: nextCache,
+        }
       }),
       setIsStreaming: (isStreaming) => set({ isStreaming }),
       setModelType: (modelType) => set({ modelType }),

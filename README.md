@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <h1>GoNexus</h1>
   <p><b>Chat, search, analyze, recognize, and reason with multimodal AI over your private knowledge base.</b></p>
 </div>
@@ -8,6 +8,7 @@
     <td align="center"><a href="./docs/cn/README_cn.md">中文</a> · <strong>日本語</strong> · <a href="./docs/en/README_en.md">English</a></td>
   </tr>
 </table>
+
 <p align="center">
   <a href="./LICENSE"><img src="./assets/badges/license-gpl-3.0.svg" alt="License"></a>
   <img src="./assets/badges/go-1.24.svg" alt="Go">
@@ -18,7 +19,6 @@
 </p>
 
 > 💡 GoNexus は、プライベートナレッジベースを活用した Q&A に対応するフルスタック AI チャットプラットフォームです。ユーザーとの対話中にローカルへアップロードされた内部資料を検索し、大規模言語モデルと組み合わせることで、業務文脈により合った回答を生成します。さらに、ユーザー認証、セッション管理、ストリーミングチャット、画像認識、クラウドデプロイまでを一つのアプリケーションとして統合しています。
-
 
 <div align="center">
   <img src="./assets/Snipaste_2026-06-17_04-46-07.png" width="800" alt="GoNexus main interface" />
@@ -32,6 +32,35 @@
 - バックエンド：Go、Gin、JWT、Eino、OpenAI 互換モデル API。
 - ストレージとミドルウェア：MySQL、Redis Stack、RabbitMQ。
 - デプロイ：Docker、GitHub Actions、AWS。
+
+---
+
+## 機能紹介
+
+### 1. ログインと登録
+
+<div align="center">
+  <img src="./assets/Snipaste_2026-06-17_04-50-32.png" width="42%" alt="GoNexus login" />
+  <img src="./assets/Snipaste_2026-06-17_05-00-19.png" width="36%" alt="GoNexus registration" />
+</div>
+
+### 2. AI チャット
+
+<div align="center">
+  <img src="./assets/Snipaste_2026-06-17_04-50-52.png" width="100%" alt="GoNexus chat" />
+</div>
+
+### 3. プライベートナレッジベースのアップロード
+
+<div align="center">
+  <img src="./assets/Snipaste_2026-06-17_04-56-04.png" width="80%" alt="GoNexus private knowledge base upload" />
+</div>
+
+### 4. 画像分析
+
+<div align="center">
+  <img src="./assets/Snipaste_2026-06-17_04-59-33.png" width="86%" alt="GoNexus image analysis" />
+</div>
 
 ---
 
@@ -64,38 +93,17 @@
 
 ---
 
-## **機能紹介**
-
-### 1. ログインと登録
+## ER 図
 
 <div align="center">
-  <img src="./assets/Snipaste_2026-06-17_04-50-32.png" width="42%" alt="GoNexus login" />
-  <img src="./assets/Snipaste_2026-06-17_05-00-19.png" width="36%" alt="GoNexus registration" />
-</div>
-
-### 2. AI チャット
-
-<div align="center">
-  <img src="./assets/Snipaste_2026-06-17_04-50-52.png" width="100%" alt="GoNexus chat" />
-</div>
-
-### 3. プライベートナレッジベースのアップロード
-
-<div align="center">
-  <img src="./assets/Snipaste_2026-06-17_04-56-04.png" width="80%" alt="GoNexus private knowledge base upload" />
-</div>
-
-### 4. 画像分析
-
-<div align="center">
-  <img src="./assets/Snipaste_2026-06-17_04-59-33.png" width="86%" alt="GoNexus image analysis" />
+  <img src="./assets/ER.png" width="750" alt="GoNexus ER diagram" />
 </div>
 
 ---
 
 ## 仕組みの説明
 
-| セクション | 主な内容 |  |
+| セクション | 主な内容 | 状態 |
 | ---- | -------- | ---- |
 | [01. ユーザー認証](./docs/ja/01.%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC%E8%AA%8D%E8%A8%BC.md) | ログインリクエスト、認証情報の検証、JWT の生成と返却 | ✅ |
 | [02. チャット連携](./docs/ja/02.%E3%83%81%E3%83%A3%E3%83%83%E3%83%88%E9%80%A3%E6%90%BA.md) | SSE ストリーミングチャット、AIHelper、モデル呼び出し、フロントエンド更新 | ✅ |
@@ -152,11 +160,3 @@ Issue や Pull Request を歓迎します。
 ## ライセンス
 
 このプロジェクトは [GNU General Public License v3.0](./LICENSE) の下で公開されています。
-
-
-
-
-
-
-
-

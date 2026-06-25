@@ -8,7 +8,7 @@ import { NeoConfirm } from "@/components/ui/NeoConfirm"
 import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 export function ChatSidebar() {
-  const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType, isStreaming } = useChatStore()
+  const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType, isStreaming, streamingSessionId, sessionMessageCache } = useChatStore()
   const { logout, username, token } = useAuthStore()
   const requireAuth = useRequireAuth()
   
@@ -74,6 +74,11 @@ export function ChatSidebar() {
   }, [sessions, currentSessionId, isStreaming, messages.length, token])
 
   const loadSessionHistory = async (sessionId: string) => {
+    if (sessionId === streamingSessionId && sessionMessageCache[sessionId]?.length > 0) {
+      setMessages(sessionMessageCache[sessionId])
+      return
+    }
+
     try {
       const res = await chatApi.getHistory(sessionId)
       if (res.data?.status_code === 1000 && res.data.history) {

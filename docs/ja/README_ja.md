@@ -1,4 +1,4 @@
-﻿<div align="center">
+<div align="center">
   <h1>GoNexus</h1>
   <p><b>Chat, search, analyze, recognize, and reason with multimodal AI over your private knowledge base.</b></p>
 </div>
@@ -8,7 +8,6 @@
     <td align="center"><a href="../cn/README_cn.md">中文</a> · <strong>日本語</strong> · <a href="../en/README_en.md">English</a></td>
   </tr>
 </table>
-
 
 <p align="center">
   <a href="../../LICENSE"><img src="../../assets/badges/license-gpl-3.0.svg" alt="License"></a>
@@ -33,6 +32,35 @@
 - バックエンド：Go、Gin、JWT、Eino、OpenAI 互換モデル API。
 - ストレージとミドルウェア：MySQL、Redis Stack、RabbitMQ。
 - デプロイ：Docker、GitHub Actions、AWS。
+
+---
+
+## 機能紹介
+
+### 1. ログインと登録
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-50-32.png" width="42%" alt="GoNexus login" />
+  <img src="../../assets/Snipaste_2026-06-17_05-00-19.png" width="36%" alt="GoNexus registration" />
+</div>
+
+### 2. AI チャット
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-50-52.png" width="100%" alt="GoNexus chat" />
+</div>
+
+### 3. プライベートナレッジベースのアップロード
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-56-04.png" width="80%" alt="GoNexus private knowledge base upload" />
+</div>
+
+### 4. 画像分析
+
+<div align="center">
+  <img src="../../assets/Snipaste_2026-06-17_04-59-33.png" width="86%" alt="GoNexus image analysis" />
+</div>
 
 ---
 
@@ -65,31 +93,10 @@
 
 ---
 
-## **機能紹介**
-
-### 1. ログインと登録
+## ER 図
 
 <div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-50-32.png" width="42%" alt="GoNexus login" />
-  <img src="../../assets/Snipaste_2026-06-17_05-00-19.png" width="36%" alt="GoNexus registration" />
-</div>
-
-### 2. AI チャット
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-50-52.png" width="100%" alt="GoNexus chat" />
-</div>
-
-### 3. プライベートナレッジベースのアップロード
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-56-04.png" width="80%" alt="GoNexus private knowledge base upload" />
-</div>
-
-### 4. 画像分析
-
-<div align="center">
-  <img src="../../assets/Snipaste_2026-06-17_04-59-33.png" width="86%" alt="GoNexus image analysis" />
+  <img src="../../assets/ER.png" width="750" alt="GoNexus ER diagram" />
 </div>
 
 ---
@@ -153,14 +160,3 @@ Issue や Pull Request を歓迎します。
 ## ライセンス
 
 このプロジェクトは [GNU General Public License v3.0](../../LICENSE) の下で公開されています。
-
-
-
-
-
-
-
-
-
-
-
