@@ -1,0 +1,73 @@
+name: Deploy EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Git branch to deploy
+        required: true
+        default: aws-ec2-deploy
+        type: string
+      app_dir:
+        description: Absolute app directory on EC2
+        required: true
+        default: /home/ubuntu/GoNexus/GoNexus
+        type: string
+
+concurrency:
+  group: gonexus-ec2-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy To EC2
+    runs-on: ubuntu-latest
+    environment:
+      name: ec2-production
+
+    steps:
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -eu
+
+            APP_DIR="${{ inputs.app_dir }}"
+            BRANCH="${{ inputs.branch }}"
+
+            echo "Deploying branch: ${BRANCH}"
+            echo "App directory: ${APP_DIR}"
+
+            cd "${APP_DIR}"
+
+            if [ ! -f docker-compose.prod.yml ]; then
+              echo "docker-compose.prod.yml was not found in ${APP_DIR}" >&2
+              exit 1
+            fi
+
+            if [ ! -f .env.prod ]; then
+              echo ".env.prod was not found in ${APP_DIR}" >&2
+              exit 1
+            fi
+
+            git config --global --add safe.directory "$(git rev-parse --show-toplevel)"
+            git fetch origin "${BRANCH}"
+            git checkout "${BRANCH}"
+            git pull --ff-only origin "${BRANCH}"
+
+            echo "Deploying commit:"
+            git --no-pager log -1 --oneline
+
+            docker compose --env-file .env.prod -f docker-compose.prod.yml build
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
+            docker compose --env-file .env.prod -f docker-compose.prod.yml ps
+
+      - name: Deployment summary
+        run: |
+          echo "EC2 deployment workflow completed." >> "$GITHUB_STEP_SUMMARY"
+          echo "Branch: ${{ inputs.branch }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "App directory: ${{ inputs.app_dir }}" >> "$GITHUB_STEP_SUMMARY"

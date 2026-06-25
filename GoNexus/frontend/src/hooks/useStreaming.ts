@@ -6,7 +6,7 @@ import { apiUrl } from '@/api/base'
 export function useStreaming() {
   const token = useAuthStore((state) => state.token)
   const logout = useAuthStore((state) => state.logout)
-  const { addMessage, updateLastMessage, setIsStreaming, setCurrentSessionId } = useChatStore()
+  const { addMessage, updateLastAssistantMessage, updateLastAssistantMessageForSession, setIsStreaming, setCurrentSessionId, setSessions, upsertSession, cacheSessionMessages, setStreamingSessionId } = useChatStore()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   const stopStream = () => {
@@ -14,6 +14,7 @@ export function useStreaming() {
       abortControllerRef.current.abort()
       abortControllerRef.current = null
       setIsStreaming(false)
+      setStreamingSessionId(null)
     }
   }
 
@@ -25,9 +26,14 @@ export function useStreaming() {
     abortControllerRef.current = controller
     
     setIsStreaming(true)
+    let streamSessionId: string | null = body.sessionId || null
+    setStreamingSessionId(streamSessionId)
     
     addMessage({ role: 'user', content: body.question })
     addMessage({ role: 'assistant', content: '' })
+    if (streamSessionId) {
+      cacheSessionMessages(streamSessionId, useChatStore.getState().messages)
+    }
 
     try {
       const response = await fetch(apiUrl(url), {
@@ -48,7 +54,12 @@ export function useStreaming() {
           window.location.assign(`/auth?returnTo=${encodeURIComponent(returnTo)}`)
           return
         }
-        updateLastMessage(`Error: ${payload?.status_msg || 'AI request failed.'}`)
+        const errorMessage = `Error: ${payload?.status_msg || 'AI request failed.'}`
+        if (streamSessionId) {
+          updateLastAssistantMessageForSession(streamSessionId, errorMessage)
+        } else {
+          updateLastAssistantMessage(errorMessage)
+        }
         return
       }
 
@@ -83,7 +94,15 @@ export function useStreaming() {
               try {
                 const parsed = JSON.parse(data)
                 if (parsed.sessionId) {
+                  streamSessionId = parsed.sessionId
+                  setStreamingSessionId(parsed.sessionId)
                   setCurrentSessionId(parsed.sessionId, true)
+                  cacheSessionMessages(parsed.sessionId, useChatStore.getState().messages)
+                  upsertSession({
+                    id: parsed.sessionId,
+                    title: body.question,
+                    updated_at: new Date().toISOString(),
+                  })
                 }
               } catch (e) {
                 console.error("Failed to parse sessionId", e)
@@ -92,18 +111,29 @@ export function useStreaming() {
             }
 
             if (currentEvent === 'error') {
+              let errorMessage = `Error: ${data}`
               try {
                 const parsed = JSON.parse(data)
-                updateLastMessage(`Error: ${parsed.message || 'AI request failed.'}`)
+                errorMessage = `Error: ${parsed.message || 'AI request failed.'}`
               } catch {
-                updateLastMessage(`Error: ${data}`)
+                errorMessage = `Error: ${data}`
+              }
+
+              if (streamSessionId) {
+                updateLastAssistantMessageForSession(streamSessionId, errorMessage)
+              } else {
+                updateLastAssistantMessage(errorMessage)
               }
               currentEvent = 'message'
               continue
             }
 
             accumulatedContent += data
-            updateLastMessage(accumulatedContent)
+            if (streamSessionId) {
+              updateLastAssistantMessageForSession(streamSessionId, accumulatedContent)
+            } else {
+              updateLastAssistantMessage(accumulatedContent)
+            }
             currentEvent = 'message'
           }
         }
@@ -113,11 +143,36 @@ export function useStreaming() {
         console.log('Stream aborted by user')
       } else {
         console.error('Streaming error:', error)
-        updateLastMessage('Error: Connection lost.')
+        if (streamSessionId) {
+          updateLastAssistantMessageForSession(streamSessionId, 'Error: Connection lost.')
+        } else {
+          updateLastAssistantMessage('Error: Connection lost.')
+        }
       }
     } finally {
       setIsStreaming(false)
+      setStreamingSessionId(null)
       abortControllerRef.current = null
+
+      if (token) {
+        try {
+          const sessionsResponse = await fetch(apiUrl('/AI/chat/sessions'), {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          })
+          const payload = await sessionsResponse.json()
+          if (payload?.status_code === 1000 && payload.sessions) {
+            setSessions(payload.sessions.map((session: any) => ({
+              id: session.sessionId,
+              title: session.name,
+              updated_at: session.updatedAt,
+            })))
+          }
+        } catch (error) {
+          console.error('Failed to refresh sessions after streaming:', error)
+        }
+      }
     }
   }
 

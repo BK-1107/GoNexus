@@ -8,7 +8,7 @@ import { NeoConfirm } from "@/components/ui/NeoConfirm"
 import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 export function ChatSidebar() {
-  const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType } = useChatStore()
+  const { sessions, setSessions, currentSessionId, setCurrentSessionId, messages, setMessages, modelType, isStreaming, streamingSessionId, sessionMessageCache } = useChatStore()
   const { logout, username, token } = useAuthStore()
   const requireAuth = useRequireAuth()
   
@@ -45,11 +45,16 @@ export function ChatSidebar() {
 
   // [优化] 自动恢复/选中逻辑：处理新浏览器登录或刷新后 currentSessionId 为空的情况
   useEffect(() => {
-    if (!token) return
+    if (!token || isStreaming) return
 
     const autoSelect = async () => {
       // 1. 如果有 ID 但没同步过（刷新场景），执行静默同步
       if (currentSessionId && !initialSyncRef.current) {
+        if (messages.length > 0) {
+          initialSyncRef.current = true
+          return
+        }
+
         console.log(`[Auto-Sync] Fetching latest history for: ${currentSessionId}`)
         loadSessionHistory(currentSessionId)
         initialSyncRef.current = true
@@ -66,9 +71,14 @@ export function ChatSidebar() {
       }
     }
     autoSelect()
-  }, [sessions, currentSessionId, token])
+  }, [sessions, currentSessionId, isStreaming, messages.length, token])
 
   const loadSessionHistory = async (sessionId: string) => {
+    if (sessionId === streamingSessionId && sessionMessageCache[sessionId]?.length > 0) {
+      setMessages(sessionMessageCache[sessionId])
+      return
+    }
+
     try {
       const res = await chatApi.getHistory(sessionId)
       if (res.data?.status_code === 1000 && res.data.history) {

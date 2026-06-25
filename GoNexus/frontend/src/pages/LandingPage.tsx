@@ -1,12 +1,14 @@
 import { Link } from "react-router-dom"
-import { ArrowRight, Star, Zap, Image as ImageIcon, MessageSquare } from "lucide-react"
+import { ArrowRight, Star, Zap, Image as ImageIcon, MessageSquare, Construction } from "lucide-react"
 import { motion } from "framer-motion"
+import { useState } from "react"
 
 export function LandingPage() {
+  const [showUnderConstruction, setShowUnderConstruction] = useState(false)
   const navItems = [
-    { name: "Features", path: "#" },
-    { name: "Showcase", path: "#" },
-    { name: "Docs", path: "#" },
+    { name: "Features", path: "https://github.com/BK-1107/GoNexus" },
+    { name: "About Me", path: "https://bk-1107.com/about/" },
+    { name: "Docs", path: "https://github.com/BK-1107/GoNexus" },
   ]
 
   return (
@@ -26,6 +28,8 @@ export function LandingPage() {
             <motion.a
               key={item.name}
               href={item.path}
+              target="_blank"
+              rel="noreferrer"
               whileHover={{ scale: 1.2, color: "#FFDE03", rotate: 5 }}
               className="font-black uppercase tracking-widest text-sm hover:underline decoration-4 underline-offset-4"
             >
@@ -49,7 +53,7 @@ export function LandingPage() {
             animate={{ x: 0, opacity: 1 }}
             className="inline-block bg-secondary border-4 border-black px-4 py-2 font-bold transform -rotate-2"
           >
-            🚀 The Ultimate Playground
+            Private Knowledge AI Platform
           </motion.div>
           
           <div className="relative">
@@ -62,14 +66,14 @@ export function LandingPage() {
                 whileHover={{ y: -10, color: "#22C55E" }} 
                 className="inline-block transition-colors duration-100"
               >
-                Build Your
+                Chat With
               </motion.span> <br/>
               <motion.span 
                 whileHover={{ scale: 1.1, rotate: 2 }}
                 className="text-primary inline-block" 
                 style={{ textShadow: "4px 4px 0 #000" }}
               >
-                Future
+                Knowledge
               </motion.span>{" "}
               <motion.span 
                 whileHover={{ skewX: -20, color: "#A78BFA" }}
@@ -200,8 +204,8 @@ export function LandingPage() {
             <div className="w-16 h-16 bg-white border-4 border-black flex items-center justify-center rounded-full group-hover:bg-primary transition-colors">
               <MessageSquare size={32} />
             </div>
-            <h3 className="text-2xl font-black uppercase">Chat Session</h3>
-            <p className="font-medium">Engage with our advanced conversational AI.</p>
+            <h3 className="text-2xl font-black uppercase">AI Chat</h3>
+            <p className="font-medium">Stream answers grounded in your private knowledge base.</p>
           </Link>
           
           <Link to="/vision" className="comic-card p-8 bg-secondary hover:bg-white flex flex-col gap-4 group transition-all">
@@ -212,27 +216,55 @@ export function LandingPage() {
             <p className="font-medium">Upload images for instant object recognition.</p>
           </Link>
 
-          <div className="comic-card p-8 bg-accent hover:bg-white flex flex-col gap-4 group transition-all">
+          <button
+            type="button"
+            onClick={() => setShowUnderConstruction(true)}
+            className="comic-card p-8 bg-accent hover:bg-white flex flex-col gap-4 group transition-all text-left"
+          >
             <div className="w-16 h-16 bg-white border-4 border-black flex items-center justify-center rounded-full group-hover:bg-accent transition-colors">
               <Zap size={32} />
             </div>
             <h3 className="text-2xl font-black uppercase">Fast APIs</h3>
             <p className="font-medium">Integrate AI seamlessly into your projects.</p>
-          </div>
+          </button>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="comic-card p-12 bg-white text-center space-y-8 relative overflow-hidden">
+      <section className="comic-card p-12 -mt-8 bg-white text-center space-y-8 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full halftone-bg opacity-10 pointer-events-none" />
-        <div className="relative z-10">
+        <div className="relative z-10 -translate-y-4">
           <div className="flex justify-center gap-2 text-secondary mb-4">
             {[1,2,3,4,5].map(i => <Star key={i} fill="currentColor" size={32} className="drop-shadow-[2px_2px_0px_rgba(0,0,0,1)]" />)}
           </div>
           <h2 className="text-4xl font-black uppercase tracking-tighter">"Absolutely mind-blowing platform!"</h2>
-          <p className="text-xl font-medium">— Student Review</p>
         </div>
       </section>
+
+      {showUnderConstruction && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-6 backdrop-blur-sm">
+          <motion.div
+            initial={{ scale: 0.8, rotate: -2, opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            className="comic-card max-w-md bg-white p-8 text-center"
+          >
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center border-4 border-black bg-secondary shadow-brutal">
+              <Construction size={44} strokeWidth={3.5} />
+            </div>
+            <h3 className="text-3xl font-black uppercase tracking-tighter">Under Construction</h3>
+            <p className="mt-3 font-bold uppercase text-black/60">
+              Fast APIs are coming soon. Please check back later.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowUnderConstruction(false)}
+              className="comic-btn mt-6 bg-primary px-8 py-3 font-black uppercase"
+            >
+              Got It
+            </button>
+          </motion.div>
+        </div>
+      )}
 
     </div>
   )
