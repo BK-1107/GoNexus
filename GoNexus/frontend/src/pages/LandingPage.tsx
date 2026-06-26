@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { ArrowRight, Star, Zap, Image as ImageIcon, MessageSquare, Construction } from "lucide-react"
+import { ArrowRight, Star, Brain, Image as ImageIcon, MessageSquare, Construction } from "lucide-react"
 import { motion } from "framer-motion"
 import { useState } from "react"
 
@@ -222,10 +222,10 @@ export function LandingPage() {
             className="comic-card p-8 bg-accent hover:bg-white flex flex-col gap-4 group transition-all text-left"
           >
             <div className="w-16 h-16 bg-white border-4 border-black flex items-center justify-center rounded-full group-hover:bg-accent transition-colors">
-              <Zap size={32} />
+              <Brain size={32} />
             </div>
-            <h3 className="text-2xl font-black uppercase">Fast APIs</h3>
-            <p className="font-medium">Integrate AI seamlessly into your projects.</p>
+            <h3 className="text-2xl font-black uppercase">Memory</h3>
+            <p className="font-medium">Extract, import, and shape durable chat context.</p>
           </button>
         </div>
       </section>
@@ -253,7 +253,7 @@ export function LandingPage() {
             </div>
             <h3 className="text-3xl font-black uppercase tracking-tighter">Under Construction</h3>
             <p className="mt-3 font-bold uppercase text-black/60">
-              Fast APIs are coming soon. Please check back later.
+              Memory tools are coming soon. Please check back later.
             </p>
             <button
               type="button"

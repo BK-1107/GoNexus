@@ -17,6 +17,7 @@ func AIRouter(r *gin.RouterGroup) {
 		r.POST("/chat/history", session.ChatHistory)
 		r.POST("/chat/memory", session.ExtractChatMemory)
 		r.POST("/chat/session/import", session.ImportSession)
+		r.POST("/chat/session/from-vision", session.CreateVisionMemorySession)
 
 		// TTS相关接口
 		r.POST("/chat/tts", tts.CreateTTSTask)

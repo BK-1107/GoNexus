@@ -10,5 +10,16 @@ export const imageApi = {
         'Content-Type': 'multipart/form-data',
       },
     })
+  },
+
+  saveToMemory: (file: File, result: string) => {
+    const formData = new FormData()
+    formData.append('image', file)
+    formData.append('result', result)
+    return client.post('/AI/chat/session/from-vision', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
   }
 }

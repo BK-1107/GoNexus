@@ -1,8 +1,10 @@
-import { Upload, Image as ImageIcon, X, Loader2, CheckCircle2, Zap, Search, Info } from "lucide-react"
+import { Upload, Image as ImageIcon, X, Loader2, CheckCircle2, Zap, Search, Info, Brain, MessageSquare } from "lucide-react"
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { imageApi } from "@/api/image"
 import { useRequireAuth } from "@/hooks/useRequireAuth"
+import { useChatStore } from "@/store/chatStore"
+import { useNavigate } from "react-router-dom"
 
 interface ImageMeta {
   name: string
@@ -17,9 +19,13 @@ export function ImageRecognition() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [status, setStatus] = useState<'idle' | 'analyzing' | 'done' | 'error'>('idle')
   const [backendResult, setBackendResult] = useState<string | null>(null)
+  const [memorySession, setMemorySession] = useState<{ id: string; title: string } | null>(null)
+  const [isSavingMemory, setIsSavingMemory] = useState(false)
   const [meta, setMeta] = useState<ImageMeta | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const requireAuth = useRequireAuth()
+  const navigate = useNavigate()
+  const { sessions, setSessions, setCurrentSessionId, setMessages } = useChatStore()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -29,6 +35,8 @@ export function ImageRecognition() {
       setPreviewUrl(url)
       setStatus('idle')
       setBackendResult(null)
+      setMemorySession(null)
+      setIsSavingMemory(false)
 
       // Extract metadata
       const img = new Image()
@@ -59,6 +67,7 @@ export function ImageRecognition() {
       const res = await imageApi.recognize(selectedFile)
       if (res.data?.status_code === 1000) {
         setBackendResult(res.data.class_name)
+        setMemorySession(null)
         setStatus('done')
       } else {
         setStatus('error')
@@ -69,11 +78,43 @@ export function ImageRecognition() {
     }
   }
 
+  const handleSaveToMemory = async () => {
+    if (!selectedFile || !backendResult || isSavingMemory) return
+    if (!requireAuth()) return
+
+    setIsSavingMemory(true)
+    try {
+      const res = await imageApi.saveToMemory(selectedFile, backendResult)
+      if (res.data?.status_code === 1000 && res.data.session) {
+        const session = {
+          id: res.data.session.sessionId,
+          title: res.data.session.name,
+          updated_at: "",
+        }
+        setSessions([session, ...sessions])
+        setMemorySession(session)
+      }
+    } catch (err) {
+      console.error("Failed to save vision result to memory", err)
+    } finally {
+      setIsSavingMemory(false)
+    }
+  }
+
+  const handleOpenChat = () => {
+    if (!memorySession) return
+    setCurrentSessionId(memorySession.id)
+    setMessages([])
+    navigate("/chat")
+  }
+
   const reset = () => {
     setSelectedFile(null)
     setPreviewUrl(null)
     setStatus('idle')
     setBackendResult(null)
+    setMemorySession(null)
+    setIsSavingMemory(false)
     setMeta(null)
   }
 
@@ -182,6 +223,31 @@ export function ImageRecognition() {
                     </div>
                     <div className="flex items-center gap-2 text-primary font-black">
                       <CheckCircle2 size={24} /> 100% VERIFIED BY GONEXUS
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={handleSaveToMemory}
+                        disabled={isSavingMemory || Boolean(memorySession)}
+                        className="comic-btn bg-primary px-5 py-3 font-black uppercase disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isSavingMemory ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <Brain size={18} strokeWidth={3} />
+                        )}
+                        {memorySession ? "Saved to Memory" : "Save to Memory"}
+                      </button>
+                      {memorySession && (
+                        <button
+                          type="button"
+                          onClick={handleOpenChat}
+                          className="comic-btn bg-white px-5 py-3 font-black uppercase"
+                        >
+                          <MessageSquare size={18} strokeWidth={3} />
+                          Open Chat
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 )}

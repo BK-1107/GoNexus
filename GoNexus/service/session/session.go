@@ -8,8 +8,13 @@ import (
 	daosession "GoNexus/dao/session"
 	"GoNexus/model"
 	"context"
+	"fmt"
 	"log"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -17,6 +22,7 @@ import (
 )
 
 var ctx = context.Background()
+var unsafePathChars = regexp.MustCompile(`[^a-zA-Z0-9._-]+`)
 
 func GetUserSessionsByUserName(userName string) ([]model.SessionInfo, error) {
 	//获取用户的所有会话ID
@@ -141,6 +147,108 @@ func ImportSession(userName string, title string, messages []model.History) (mod
 		SessionID: newSession.ID,
 		Title:     newSession.Title,
 	}, code.CodeSuccess
+}
+
+func CreateVisionMemorySession(userName string, imageFile *multipart.FileHeader, result string) (model.SessionInfo, code.Code) {
+	result = strings.TrimSpace(result)
+	if imageFile == nil || result == "" {
+		return model.SessionInfo{}, code.CodeInvalidParams
+	}
+
+	contentType := imageFile.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "image/") {
+		return model.SessionInfo{}, code.CodeInvalidParams
+	}
+
+	safeUser := sanitizePathSegment(userName)
+	originalFileName := filepath.Base(strings.ReplaceAll(imageFile.Filename, "\\", "/"))
+	if strings.TrimSpace(originalFileName) == "" || originalFileName == "." {
+		originalFileName = "image"
+	}
+
+	title := "image memory " + originalFileName
+	titleRunes := []rune(title)
+	if len(titleRunes) > 100 {
+		title = string(titleRunes[:100])
+	}
+
+	newSession := &model.Session{
+		ID:       uuid.New().String(),
+		UserName: userName,
+		Title:    title,
+	}
+	if _, err := daosession.CreateSession(newSession); err != nil {
+		log.Println("CreateVisionMemorySession CreateSession error:", err)
+		return model.SessionInfo{}, code.CodeServerBusy
+	}
+
+	uploadDir := filepath.Join("uploads", "vision", safeUser, newSession.ID)
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		log.Println("CreateVisionMemorySession MkdirAll error:", err)
+		return model.SessionInfo{}, code.CodeServerBusy
+	}
+
+	ext := strings.ToLower(filepath.Ext(originalFileName))
+	if ext == "" || len(ext) > 10 {
+		ext = ".img"
+	}
+	storedFileName := uuid.New().String() + ext
+	storedPath := filepath.Join(uploadDir, storedFileName)
+	src, err := imageFile.Open()
+	if err != nil {
+		log.Println("CreateVisionMemorySession Open image error:", err)
+		return model.SessionInfo{}, code.CodeServerBusy
+	}
+	defer src.Close()
+
+	dst, err := os.Create(storedPath)
+	if err != nil {
+		log.Println("CreateVisionMemorySession Create image error:", err)
+		return model.SessionInfo{}, code.CodeServerBusy
+	}
+	defer dst.Close()
+
+	if _, err := dst.ReadFrom(src); err != nil {
+		log.Println("CreateVisionMemorySession Save image error:", err)
+		return model.SessionInfo{}, code.CodeServerBusy
+	}
+
+	publicPath := "/" + filepath.ToSlash(storedPath)
+	userContent := fmt.Sprintf("Uploaded image: %s\n\n![%s](%s)", originalFileName, originalFileName, publicPath)
+	if _, err := daomessage.CreateMessage(&model.Message{
+		SessionID: newSession.ID,
+		UserName:  userName,
+		Content:   userContent,
+		IsUser:    true,
+	}); err != nil {
+		log.Println("CreateVisionMemorySession Create user message error:", err)
+		return model.SessionInfo{}, code.CodeServerBusy
+	}
+
+	if _, err := daomessage.CreateMessage(&model.Message{
+		SessionID: newSession.ID,
+		UserName:  userName,
+		Content:   "Image recognition result:\n\n" + result,
+		IsUser:    false,
+	}); err != nil {
+		log.Println("CreateVisionMemorySession Create assistant message error:", err)
+		return model.SessionInfo{}, code.CodeServerBusy
+	}
+
+	return model.SessionInfo{
+		SessionID: newSession.ID,
+		Title:     newSession.Title,
+	}, code.CodeSuccess
+}
+
+func sanitizePathSegment(value string) string {
+	value = strings.TrimSpace(value)
+	value = unsafePathChars.ReplaceAllString(value, "_")
+	value = strings.Trim(value, "._-")
+	if value == "" {
+		return "unknown"
+	}
+	return value
 }
 
 func StreamMessageToExistingSession(userName string, sessionID string, userQuestion string, modelType string, writer http.ResponseWriter) code.Code {
@@ -328,6 +436,10 @@ func DeleteSession(userName string, sessionID string) code.Code {
 	}
 	if err := daosession.DeleteSessionByID(sessionID); err != nil {
 		return code.CodeServerBusy
+	}
+	visionDir := filepath.Join("uploads", "vision", sanitizePathSegment(userName), sessionID)
+	if err := os.RemoveAll(visionDir); err != nil {
+		log.Println("DeleteSession RemoveAll vision assets error:", err)
 	}
 	aihelper.GetGlobalManager().RemoveAIHelper(userName, sessionID)
 	return code.CodeSuccess

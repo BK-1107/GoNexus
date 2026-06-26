@@ -75,6 +75,11 @@ type (
 		Session model.SessionInfo `json:"session"`
 		controller.Response
 	}
+
+	VisionMemoryResponse struct {
+		Session model.SessionInfo `json:"session"`
+		controller.Response
+	}
 )
 
 // 查询当前登录用户的所有聊天会话。
@@ -264,6 +269,28 @@ func ImportSession(c *gin.Context) {
 
 	res.Success()
 	res.Session = importedSession
+	c.JSON(http.StatusOK, res)
+}
+
+func CreateVisionMemorySession(c *gin.Context) {
+	res := new(VisionMemoryResponse)
+	userName := c.GetString("userName")
+
+	imageFile, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	result := c.PostForm("result")
+	sessionInfo, code_ := session.CreateVisionMemorySession(userName, imageFile, result)
+	if code_ != code.CodeSuccess {
+		c.JSON(http.StatusOK, res.CodeOf(code_))
+		return
+	}
+
+	res.Success()
+	res.Session = sessionInfo
 	c.JSON(http.StatusOK, res)
 }
 

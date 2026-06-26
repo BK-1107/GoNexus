@@ -104,7 +104,7 @@ export function MessageList() {
                 </div>
               )}
               
-              <div className="relative max-w-[85%]">
+              <div className={`relative ${isEditing ? 'w-full max-w-4xl' : 'max-w-[85%]'}`}>
                 {/* Comic bubble tail for assistant */}
                 {msg.role === 'assistant' && (
                   <div className="absolute -left-3 top-6 w-6 h-6 bg-white border-b-4 border-l-4 border-black transform rotate-45" />
@@ -117,8 +117,8 @@ export function MessageList() {
                 <div
                   className={`relative z-10 px-6 py-4 text-[16px] leading-relaxed font-bold border-4 border-black shadow-brutal prose prose-stone max-w-none ${
                     msg.role === 'user' 
-                      ? 'bg-secondary text-black pr-20' 
-                      : 'bg-white text-black pr-20'
+                      ? `bg-secondary text-black ${isEditing ? 'w-full' : 'pr-20'}` 
+                      : `bg-white text-black ${isEditing ? 'w-full' : 'pr-20'}`
                   }`}
                 >
                   {!isEditing && (
@@ -144,11 +144,11 @@ export function MessageList() {
                     </div>
                   )}
                   {isEditing ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="flex w-full flex-col gap-3">
                       <textarea
                         value={editContent}
                         onChange={(event) => setEditContent(event.target.value)}
-                        className="min-h-32 w-full resize-y border-4 border-black bg-white p-3 font-bold text-black outline-none"
+                        className="min-h-64 w-full resize-y border-4 border-black bg-white p-4 font-bold leading-relaxed text-black outline-none"
                       />
                       <div className="flex justify-end gap-2">
                         <button

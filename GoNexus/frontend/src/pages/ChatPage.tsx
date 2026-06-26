@@ -2,14 +2,60 @@ import { Link } from "react-router-dom"
 import { ChatSidebar } from "@/components/chat/ChatSidebar"
 import { MessageList } from "@/components/chat/MessageList"
 import { ChatInput } from "@/components/chat/ChatInput"
-import { ArrowLeft, Clipboard } from "lucide-react"
+import { ArrowLeft, Clipboard, Upload } from "lucide-react"
 import { chatApi } from "@/api/chat"
 import { useChatStore } from "@/store/chatStore"
 import { useRequireAuth } from "@/hooks/useRequireAuth"
+import { useRef } from "react"
 
 export function ChatPage() {
-  const { currentSessionId } = useChatStore()
+  const { currentSessionId, sessions, setSessions, setCurrentSessionId, setMessages } = useChatStore()
   const requireAuth = useRequireAuth()
+  const importInputRef = useRef<HTMLInputElement | null>(null)
+
+  const handleImportClick = () => {
+    if (!requireAuth()) return
+    importInputRef.current?.click()
+  }
+
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file || !requireAuth()) return
+
+    try {
+      const payload = JSON.parse(await file.text())
+      const rawMessages = Array.isArray(payload) ? payload : payload.messages
+      if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+        return
+      }
+
+      const importedMessages = rawMessages
+        .map((message: any) => ({
+          is_user: Boolean(message.is_user ?? message.isUser ?? message.role === "user"),
+          content: String(message.content ?? "").trim(),
+        }))
+        .filter((message: any) => message.content)
+
+      const title = String(payload.title ?? payload.name ?? "Imported Chat")
+      const res = await chatApi.importSession(title, importedMessages)
+      if (res.data?.status_code === 1000 && res.data.session) {
+        const session = {
+          id: res.data.session.sessionId,
+          title: res.data.session.name,
+          updated_at: "",
+        }
+        setSessions([session, ...sessions])
+        setCurrentSessionId(session.id)
+        setMessages(importedMessages.map((message: any) => ({
+          role: message.is_user ? "user" : "assistant",
+          content: message.content,
+        })))
+      }
+    } catch (err) {
+      console.error("Failed to import session", err)
+    }
+  }
 
   const handleExtractMemory = async () => {
     if (!requireAuth() || !currentSessionId) return
@@ -51,6 +97,22 @@ export function ChatPage() {
           </Link>
           <h1 className="text-2xl font-black uppercase tracking-tighter">Chat <span className="text-white" style={{ textShadow: "2px 2px 0 #000" }}>Session</span></h1>
           <div className="ml-auto flex gap-2">
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <button
+              type="button"
+              onClick={handleImportClick}
+              title="Import session memory"
+              className="flex h-11 items-center justify-center gap-2 border-4 border-black bg-white px-3 font-black uppercase shadow-[4px_4px_0px_#000] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
+            >
+              <Upload size={19} strokeWidth={3} />
+              <span className="hidden lg:inline">Import</span>
+            </button>
             <button
               type="button"
               onClick={handleExtractMemory}
