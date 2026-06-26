@@ -1,4 +1,4 @@
-import { Upload, Image as ImageIcon, X, Loader2, CheckCircle2, Zap, Search, Info, Brain, MessageSquare, Wand2, Copy, ImagePlus } from "lucide-react"
+import { Upload, Image as ImageIcon, X, Loader2, CheckCircle2, Zap, Search, Info, Brain, MessageSquare, Wand2, Copy } from "lucide-react"
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { imageApi } from "@/api/image"
@@ -28,6 +28,7 @@ export function ImageRecognition() {
   const [generatedPrompt, setGeneratedPrompt] = useState<GeneratedPrompt | null>(null)
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
   const [copiedPrompt, setCopiedPrompt] = useState(false)
+  const [isEditingPrompt, setIsEditingPrompt] = useState(false)
   const [meta, setMeta] = useState<ImageMeta | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const requireAuth = useRequireAuth()
@@ -47,6 +48,7 @@ export function ImageRecognition() {
       setGeneratedPrompt(null)
       setIsGeneratingPrompt(false)
       setCopiedPrompt(false)
+      setIsEditingPrompt(false)
 
       // Extract metadata
       const img = new Image()
@@ -132,6 +134,7 @@ export function ImageRecognition() {
         setGeneratedPrompt({
           prompt: res.data.prompt || "",
         })
+        setIsEditingPrompt(false)
       }
     } catch (err) {
       console.error("Failed to generate prompt", err)
@@ -157,6 +160,7 @@ export function ImageRecognition() {
     setGeneratedPrompt(null)
     setIsGeneratingPrompt(false)
     setCopiedPrompt(false)
+    setIsEditingPrompt(false)
     setMeta(null)
   }
 
@@ -194,8 +198,8 @@ export function ImageRecognition() {
             <p className="text-xl font-black uppercase">DROP OR SELECT IMAGE</p>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-6">
+          <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2">
+            <div className="flex h-full flex-col gap-6">
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="comic-card p-4 bg-white relative">
                 <button onClick={reset} className="absolute -top-4 -right-4 bg-destructive border-4 border-black p-2 z-10 shadow-brutal hover:translate-x-1 hover:translate-y-1 transition-all">
                   <X size={20} />
@@ -227,13 +231,13 @@ export function ImageRecognition() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="comic-card bg-white p-4 border-4 border-black"
+                    className="comic-card flex-1 bg-white p-5 border-4 border-black"
                   >
-                    <div className="flex items-center gap-2 border-b-2 border-black pb-2 mb-3">
-                      <Info size={18} className="text-primary" />
-                      <h4 className="font-black uppercase text-sm">Image Properties</h4>
+                    <div className="flex items-center gap-2 border-b-2 border-black pb-3 mb-4">
+                      <Info size={20} className="text-primary" />
+                      <h4 className="font-black uppercase text-base">Image Properties</h4>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-5">
                       {[
                         { label: "Dimensions", value: meta.dimensions },
                         { label: "File Size", value: meta.size },
@@ -241,8 +245,8 @@ export function ImageRecognition() {
                         { label: "Modified", value: meta.lastModified },
                       ].map((item, idx) => (
                         <div key={idx} className="space-y-1">
-                          <p className="text-[10px] font-black text-black/40 uppercase tracking-tighter">{item.label}</p>
-                          <p className="text-xs font-bold truncate">{item.value}</p>
+                          <p className="text-xs font-black text-black/45 uppercase">{item.label}</p>
+                          <p className="text-base font-black truncate">{item.value}</p>
                         </div>
                       ))}
                     </div>
@@ -252,7 +256,7 @@ export function ImageRecognition() {
 
             </div>
 
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="comic-card self-start p-6 bg-accent border-primary flex flex-col gap-4">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="comic-card h-full p-6 bg-accent border-primary flex flex-col gap-4">
               <h3 className="text-xl font-black uppercase flex items-center gap-2">
                 <Search size={20} /> Backend Intelligence
               </h3>
@@ -261,7 +265,7 @@ export function ImageRecognition() {
                 {status === 'analyzing' && <p className="font-black animate-pulse">BACKEND IS PROCESSING DATA...</p>}
                 {status === 'done' && backendResult && (
                   <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-4">
-                    <div className="h-[360px] overflow-y-auto bg-white border-4 border-black p-4 shadow-brutal text-left">
+                    <div className="h-[430px] overflow-y-auto bg-white border-4 border-black p-4 shadow-brutal text-left">
                       <p className="font-black text-left leading-tight text-lg">{backendResult}</p>
                     </div>
                     <div className="flex items-center gap-2 text-primary font-black">
@@ -320,22 +324,31 @@ export function ImageRecognition() {
         <motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 gap-6 lg:grid-cols-2"
+          className="grid grid-cols-1 gap-6"
         >
           <div className="comic-card bg-white p-6">
-            <div className="mb-4 flex items-center justify-between gap-3 border-b-4 border-black pb-3">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b-4 border-black pb-3">
               <h3 className="flex items-center gap-2 text-2xl font-black uppercase tracking-tighter">
                 <Wand2 size={24} strokeWidth={3} />
                 Prompt Studio
               </h3>
-              <button
-                type="button"
-                onClick={handleCopyPrompt}
-                className="comic-btn bg-primary px-4 py-2 text-sm font-black uppercase"
-              >
-                <Copy size={16} strokeWidth={3} />
-                {copiedPrompt ? "Copied" : "Copy Prompt"}
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingPrompt((value) => !value)}
+                  className="comic-btn bg-white px-4 py-2 text-sm font-black uppercase"
+                >
+                  {isEditingPrompt ? "Done" : "Edit Prompt"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyPrompt}
+                  className="comic-btn bg-primary px-4 py-2 text-sm font-black uppercase"
+                >
+                  <Copy size={16} strokeWidth={3} />
+                  {copiedPrompt ? "Copied" : "Copy Prompt"}
+                </button>
+              </div>
             </div>
 
             <div>
@@ -343,26 +356,9 @@ export function ImageRecognition() {
               <textarea
                 value={generatedPrompt.prompt}
                 onChange={(event) => setGeneratedPrompt({ prompt: event.target.value })}
-                className="min-h-[360px] w-full resize-y border-4 border-black bg-white p-4 font-bold leading-relaxed outline-none"
+                readOnly={!isEditingPrompt}
+                className={`min-h-[280px] w-full resize-y border-4 border-black p-5 text-xl font-black leading-9 outline-none ${isEditingPrompt ? "bg-white" : "bg-[#f8fafc]"}`}
               />
-            </div>
-          </div>
-
-          <div className="comic-card bg-accent p-6">
-            <div className="mb-4 flex items-center gap-2 border-b-4 border-black pb-3">
-              <ImagePlus size={24} strokeWidth={3} />
-              <h3 className="text-2xl font-black uppercase tracking-tighter">Generated Image</h3>
-            </div>
-            <div className="flex min-h-80 flex-col items-center justify-center gap-4 border-4 border-dashed border-black bg-white/60 p-6 text-center">
-              <ImagePlus size={54} strokeWidth={2.5} className="text-black/40" />
-              <p className="font-black uppercase text-black/50">Image generation API coming soon</p>
-              <button
-                type="button"
-                disabled
-                className="comic-btn bg-white px-5 py-3 font-black uppercase opacity-50"
-              >
-                Generate Image
-              </button>
             </div>
           </div>
         </motion.section>
