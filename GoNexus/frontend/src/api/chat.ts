@@ -8,6 +8,10 @@ export const chatApi = {
   getHistory: (sessionId: string) => client.post('/AI/chat/history', { 
     sessionId: sessionId 
   }),
+
+  extractMemory: (sessionId: string) => client.post('/AI/chat/memory', {
+    sessionId: sessionId
+  }),
   
   // 发送消息 (普通非流式)
   sendMessage: (sessionId: string, content: string) => client.post('/AI/chat/send', { sessionId: sessionId, content }),
@@ -17,6 +21,11 @@ export const chatApi = {
 
   // 删除会话
   deleteSession: (sessionId: string) => client.delete(`/AI/chat/session/${sessionId}`),
+
+  importSession: (title: string, messages: Array<{ is_user: boolean; content: string }>) =>
+    client.post('/AI/chat/session/import', { title, messages }),
+
+  updateMessage: (messageId: number, content: string) => client.put(`/AI/chat/message/${messageId}`, { content }),
 
   deleteMessage: (messageId: number) => client.delete(`/AI/chat/message/${messageId}`),
 }

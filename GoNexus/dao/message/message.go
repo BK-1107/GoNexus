@@ -45,3 +45,11 @@ func GetMessageByID(id uint) (*model.Message, error) {
 func DeleteMessageByID(id uint) error {
 	return mysql.DB.Delete(&model.Message{}, id).Error
 }
+
+func UpdateMessageContentByID(id uint, content string) error {
+	return mysql.DB.Model(&model.Message{}).Where("id = ?", id).Update("content", content).Error
+}
+
+func DeleteMessagesBySessionID(sessionID string) error {
+	return mysql.DB.Where("session_id = ?", sessionID).Delete(&model.Message{}).Error
+}

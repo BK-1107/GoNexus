@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 import { useChatStore } from "@/store/chatStore"
 import { chatApi } from "@/api/chat"
-import { X } from "lucide-react"
+import { Check, Edit3, X } from "lucide-react"
 import { useState } from "react"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -10,31 +10,68 @@ import { useAuthStore } from "@/store/authStore"
 import { useRequireAuth } from "@/hooks/useRequireAuth"
 
 export function MessageList() {
-  const { messages, removeMessage } = useChatStore()
+  const { messages, removeMessage, updateMessage } = useChatStore()
   const token = useAuthStore((state) => state.token)
   const requireAuth = useRequireAuth()
   const [deletingKey, setDeletingKey] = useState<string | null>(null)
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState("")
   const visibleMessages = token ? messages : []
+  const getPersistedId = (id?: number) => (id && id > 0 ? id : undefined)
 
   const handleDeleteMessage = async (index: number, messageId?: number) => {
     if (!requireAuth()) return
 
-    const deleteKey = messageId ? String(messageId) : `local-${index}`
+    const persistedId = getPersistedId(messageId)
+    const deleteKey = persistedId ? String(persistedId) : `local-${index}`
     if (deletingKey) return
 
     setDeletingKey(deleteKey)
     try {
-      if (messageId) {
-        const res = await chatApi.deleteMessage(messageId)
+      if (persistedId) {
+        const res = await chatApi.deleteMessage(persistedId)
         if (res.data?.status_code !== 1000) {
           return
         }
       }
-      removeMessage(index, messageId)
+      removeMessage(index, persistedId)
     } catch (err) {
       console.error("Failed to delete message", err)
     } finally {
       setDeletingKey(null)
+    }
+  }
+
+  const startEditing = (index: number, content: string, messageId?: number) => {
+    if (!requireAuth()) return
+    const persistedId = getPersistedId(messageId)
+    setEditingKey(persistedId ? String(persistedId) : `local-${index}`)
+    setEditContent(content)
+  }
+
+  const cancelEditing = () => {
+    setEditingKey(null)
+    setEditContent("")
+  }
+
+  const saveMessage = async (index: number, messageId?: number) => {
+    if (!requireAuth()) return
+
+    const nextContent = editContent.trim()
+    if (!nextContent) return
+
+    try {
+      const persistedId = getPersistedId(messageId)
+      if (persistedId) {
+        const res = await chatApi.updateMessage(persistedId, nextContent)
+        if (res.data?.status_code !== 1000) {
+          return
+        }
+      }
+      updateMessage(index, nextContent, persistedId)
+      cancelEditing()
+    } catch (err) {
+      console.error("Failed to update message", err)
     }
   }
 
@@ -54,6 +91,13 @@ export function MessageList() {
               animate={{ opacity: 1, y: 0 }}
               className={`group/message flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
+              {(() => {
+                const persistedId = getPersistedId(msg.id)
+                const messageKey = persistedId ? String(persistedId) : `local-${i}`
+                const isEditing = editingKey === messageKey
+
+                return (
+                  <>
               {msg.role === 'assistant' && (
                 <div className="w-12 h-12 bg-primary border-4 border-black shadow-brutal flex items-center justify-center mr-4 mt-2 shrink-0 transform -rotate-3">
                   <span className="text-black font-black text-xl">GN</span>
@@ -72,7 +116,17 @@ export function MessageList() {
                 
                 <button
                   type="button"
-                  onClick={() => handleDeleteMessage(i, msg.id)}
+                  onClick={() => startEditing(i, msg.content, persistedId)}
+                  disabled={deletingKey !== null || isEditing}
+                  title="Edit message"
+                  className="absolute -left-3 -top-3 z-30 flex h-7 w-7 items-center justify-center border-4 border-black bg-primary text-black opacity-0 shadow-[3px_3px_0px_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none group-hover/message:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Edit3 size={13} strokeWidth={4} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDeleteMessage(i, persistedId)}
                   disabled={deletingKey !== null}
                   title="Delete message"
                   className="absolute -right-3 -top-3 z-30 flex h-7 w-7 items-center justify-center border-4 border-black bg-destructive text-white opacity-0 shadow-[3px_3px_0px_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none group-hover/message:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
@@ -87,7 +141,33 @@ export function MessageList() {
                       : 'bg-white text-black'
                   }`}
                 >
-                  {msg.content === '' ? (
+                  {isEditing ? (
+                    <div className="flex flex-col gap-3">
+                      <textarea
+                        value={editContent}
+                        onChange={(event) => setEditContent(event.target.value)}
+                        className="min-h-32 w-full resize-y border-4 border-black bg-white p-3 font-bold text-black outline-none"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={cancelEditing}
+                          className="flex h-9 w-9 items-center justify-center border-4 border-black bg-white shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+                          title="Cancel edit"
+                        >
+                          <X size={16} strokeWidth={4} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => saveMessage(i, persistedId)}
+                          className="flex h-9 w-9 items-center justify-center border-4 border-black bg-primary shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+                          title="Save edit"
+                        >
+                          <Check size={18} strokeWidth={4} />
+                        </button>
+                      </div>
+                    </div>
+                  ) : msg.content === '' ? (
                     <div className="flex gap-1 py-2">
                       {[0, 1, 2].map((dot) => (
                         <motion.div
@@ -138,6 +218,9 @@ export function MessageList() {
                   <span className="text-black font-black text-xl">U</span>
                 </div>
               )}
+                  </>
+                )
+              })()}
             </motion.div>
           ))
         )}

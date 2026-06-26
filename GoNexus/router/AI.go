@@ -15,6 +15,8 @@ func AIRouter(r *gin.RouterGroup) {
 		r.POST("/chat/send-new-session", session.CreateSessionAndSendMessage)
 		r.POST("/chat/send", session.ChatSend)
 		r.POST("/chat/history", session.ChatHistory)
+		r.POST("/chat/memory", session.ExtractChatMemory)
+		r.POST("/chat/session/import", session.ImportSession)
 
 		// TTS相关接口
 		r.POST("/chat/tts", tts.CreateTTSTask)
@@ -22,6 +24,7 @@ func AIRouter(r *gin.RouterGroup) {
 		r.POST("/chat/send-stream-new-session", session.CreateStreamSessionAndSendMessage)
 		r.POST("/chat/send-stream", session.ChatStreamSend)
 		r.DELETE("/chat/session/:id", session.DeleteSession)
+		r.PUT("/chat/message/:id", session.UpdateMessage)
 		r.DELETE("/chat/message/:id", session.DeleteMessage)
 	}
 

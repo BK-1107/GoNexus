@@ -55,6 +55,26 @@ type (
 		History []model.History `json:"history"`
 		controller.Response
 	}
+
+	ChatMemoryResponse struct {
+		Memory  string          `json:"memory"`
+		History []model.History `json:"history"`
+		controller.Response
+	}
+
+	UpdateMessageRequest struct {
+		Content string `json:"content" binding:"required"`
+	}
+
+	ImportSessionRequest struct {
+		Title    string          `json:"title"`
+		Messages []model.History `json:"messages" binding:"required"`
+	}
+
+	ImportSessionResponse struct {
+		Session model.SessionInfo `json:"session"`
+		controller.Response
+	}
 )
 
 // 查询当前登录用户的所有聊天会话。
@@ -204,6 +224,49 @@ func ChatHistory(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+func ExtractChatMemory(c *gin.Context) {
+	req := new(ChatHistoryRequest)
+	res := new(ChatMemoryResponse)
+	userName := c.GetString("userName")
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	memory, history, code_ := session.ExtractChatMemory(userName, req.SessionID)
+	if code_ != code.CodeSuccess {
+		c.JSON(http.StatusOK, res.CodeOf(code_))
+		return
+	}
+
+	res.Success()
+	res.Memory = memory
+	res.History = history
+	c.JSON(http.StatusOK, res)
+}
+
+func ImportSession(c *gin.Context) {
+	req := new(ImportSessionRequest)
+	res := new(ImportSessionResponse)
+	userName := c.GetString("userName")
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	importedSession, code_ := session.ImportSession(userName, req.Title, req.Messages)
+	if code_ != code.CodeSuccess {
+		c.JSON(http.StatusOK, res.CodeOf(code_))
+		return
+	}
+
+	res.Success()
+	res.Session = importedSession
+	c.JSON(http.StatusOK, res)
+}
+
 // DeleteSession 删除当前用户的指定会话。
 func DeleteSession(c *gin.Context) {
 	sessionID := c.Param("id")
@@ -229,6 +292,29 @@ func DeleteMessage(c *gin.Context) {
 	code_ := session.DeleteMessage(userName, uint(messageID))
 	if code_ != code.CodeSuccess {
 		c.JSON(http.StatusOK, gin.H{"status_code": code_, "status_msg": "Delete failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status_code": code.CodeSuccess, "status_msg": "Success"})
+}
+
+func UpdateMessage(c *gin.Context) {
+	messageID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"status_code": code.CodeInvalidParams, "status_msg": "Invalid message id"})
+		return
+	}
+
+	req := new(UpdateMessageRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusOK, gin.H{"status_code": code.CodeInvalidParams, "status_msg": "Invalid parameters"})
+		return
+	}
+
+	userName := c.GetString("userName")
+	code_ := session.UpdateMessage(userName, uint(messageID), req.Content)
+	if code_ != code.CodeSuccess {
+		c.JSON(http.StatusOK, gin.H{"status_code": code_, "status_msg": "Update failed"})
 		return
 	}
 

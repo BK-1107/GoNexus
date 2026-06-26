@@ -31,6 +31,7 @@ interface ChatState {
   setStreamingSessionId: (sessionId: string | null) => void
   addMessage: (message: Message) => void
   removeMessage: (index: number, id?: number) => void
+  updateMessage: (index: number, content: string, id?: number) => void
   updateLastMessage: (content: string) => void
   updateLastAssistantMessage: (content: string) => void
   updateLastAssistantMessageForSession: (sessionId: string, content: string) => void
@@ -74,10 +75,16 @@ export const useChatStore = create<ChatState>()(
       addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
       removeMessage: (index, id) => set((state) => ({
         messages: state.messages.filter((message, messageIndex) => {
-          if (id !== undefined) {
+          if (id !== undefined && id > 0) {
             return message.id !== id
           }
           return messageIndex !== index
+        })
+      })),
+      updateMessage: (index, content, id) => set((state) => ({
+        messages: state.messages.map((message, messageIndex) => {
+          const isTarget = id !== undefined && id > 0 ? message.id === id : messageIndex === index
+          return isTarget ? { ...message, content } : message
         })
       })),
       updateLastMessage: (content) => set((state) => {

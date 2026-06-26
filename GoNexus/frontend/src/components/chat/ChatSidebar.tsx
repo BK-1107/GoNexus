@@ -1,4 +1,4 @@
-import { MessageSquare, Plus, Settings, Home, LogIn, LogOut, Trash2, Database, Zap } from "lucide-react"
+import { MessageSquare, Plus, Settings, Home, LogIn, LogOut, Trash2, Database, Zap, Upload } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useEffect, useState, useRef } from "react"
 import { useChatStore } from "@/store/chatStore"
@@ -14,6 +14,7 @@ export function ChatSidebar() {
   
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [deleteTitle, setDeleteTitle] = useState("")
+  const importInputRef = useRef<HTMLInputElement | null>(null)
   const initialSyncRef = useRef(false)
   const visibleSessions = token ? sessions : []
 
@@ -107,6 +108,50 @@ export function ChatSidebar() {
     setMessages([])
   }
 
+  const handleImportClick = () => {
+    if (!requireAuth()) return
+    importInputRef.current?.click()
+  }
+
+  const handleImportFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file || !requireAuth()) return
+
+    try {
+      const payload = JSON.parse(await file.text())
+      const rawMessages = Array.isArray(payload) ? payload : payload.messages
+      if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+        return
+      }
+
+      const importedMessages = rawMessages
+        .map((message: any) => ({
+          is_user: Boolean(message.is_user ?? message.isUser ?? message.role === "user"),
+          content: String(message.content ?? "").trim(),
+        }))
+        .filter((message: any) => message.content)
+
+      const title = String(payload.title ?? payload.name ?? "Imported Chat")
+      const res = await chatApi.importSession(title, importedMessages)
+      if (res.data?.status_code === 1000 && res.data.session) {
+        const session = {
+          id: res.data.session.sessionId,
+          title: res.data.session.name,
+          updated_at: "",
+        }
+        setSessions([session, ...sessions])
+        setCurrentSessionId(session.id)
+        setMessages(importedMessages.map((message: any) => ({
+          role: message.is_user ? "user" : "assistant",
+          content: message.content,
+        })))
+      }
+    } catch (err) {
+      console.error("Failed to import session", err)
+    }
+  }
+
   const openDeleteModal = (e: React.MouseEvent, s: any) => {
     e.stopPropagation()
     if (!requireAuth()) return
@@ -164,6 +209,21 @@ export function ChatSidebar() {
           <Database size={20} strokeWidth={3} />
           <span>Knowledge</span>
         </Link>
+
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={handleImportFile}
+        />
+        <button 
+          onClick={handleImportClick}
+          className="bg-white text-black py-3 px-4 w-full gap-2 text-md border-4 border-black shadow-[4px_4px_0px_#000] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center font-black uppercase"
+        >
+          <Upload size={20} strokeWidth={3} />
+          <span>Import</span>
+        </button>
       </div>
 
       {/* Mode Indicator */}

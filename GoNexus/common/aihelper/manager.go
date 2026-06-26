@@ -62,8 +62,13 @@ func (m *AIHelperManager) GetAIHelper(userName string, sessionID string) (*AIHel
 		return nil, false
 	}
 
-	helper, exists := userHelpers[sessionID]
-	return helper, exists
+	for _, helper := range userHelpers {
+		if helper.SessionID == sessionID {
+			return helper, true
+		}
+	}
+
+	return nil, false
 }
 
 // 绉婚櫎鎸囧畾鐢ㄦ埛鐨勬寚瀹氫細璇濈殑AIHelper
@@ -76,7 +81,11 @@ func (m *AIHelperManager) RemoveAIHelper(userName string, sessionID string) {
 		return
 	}
 
-	delete(userHelpers, sessionID)
+	for key, helper := range userHelpers {
+		if helper.SessionID == sessionID {
+			delete(userHelpers, key)
+		}
+	}
 
 	// 濡傛灉鐢ㄦ埛娌℃湁浼氳瘽浜嗭紝娓呯悊鐢ㄦ埛鏄犲皠
 	if len(userHelpers) == 0 {
@@ -97,6 +106,22 @@ func (m *AIHelperManager) RemoveMessageFromSession(userName string, sessionID st
 	for _, helper := range userHelpers {
 		if helper.SessionID == sessionID {
 			helper.RemoveMessageByID(messageID)
+		}
+	}
+}
+
+func (m *AIHelperManager) UpdateMessageInSession(userName string, sessionID string, messageID uint, content string) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	userHelpers, exists := m.helpers[userName]
+	if !exists {
+		return
+	}
+
+	for _, helper := range userHelpers {
+		if helper.SessionID == sessionID {
+			helper.UpdateMessageContentByID(messageID, content)
 		}
 	}
 }

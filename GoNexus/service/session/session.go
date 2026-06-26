@@ -10,6 +10,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -84,6 +85,62 @@ func CreateStreamSessionOnly(userName string, userQuestion string) (string, code
 		return "", code.CodeServerBusy
 	}
 	return createdSession.ID, code.CodeSuccess
+}
+
+func ImportSession(userName string, title string, messages []model.History) (model.SessionInfo, code.Code) {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		title = "Imported Chat"
+	}
+	titleRunes := []rune(title)
+	if len(titleRunes) > 100 {
+		title = string(titleRunes[:100])
+	}
+	if len(messages) == 0 {
+		return model.SessionInfo{}, code.CodeInvalidParams
+	}
+
+	cleanMessages := make([]model.History, 0, len(messages))
+	for _, item := range messages {
+		content := strings.TrimSpace(item.Content)
+		if content == "" {
+			continue
+		}
+		cleanMessages = append(cleanMessages, model.History{
+			IsUser:  item.IsUser,
+			Content: content,
+		})
+	}
+	if len(cleanMessages) == 0 {
+		return model.SessionInfo{}, code.CodeInvalidParams
+	}
+
+	newSession := &model.Session{
+		ID:       uuid.New().String(),
+		UserName: userName,
+		Title:    title,
+	}
+	if _, err := daosession.CreateSession(newSession); err != nil {
+		log.Println("ImportSession CreateSession error:", err)
+		return model.SessionInfo{}, code.CodeServerBusy
+	}
+
+	for _, item := range cleanMessages {
+		if _, err := daomessage.CreateMessage(&model.Message{
+			SessionID: newSession.ID,
+			UserName:  userName,
+			Content:   item.Content,
+			IsUser:    item.IsUser,
+		}); err != nil {
+			log.Println("ImportSession CreateMessage error:", err)
+			return model.SessionInfo{}, code.CodeServerBusy
+		}
+	}
+
+	return model.SessionInfo{
+		SessionID: newSession.ID,
+		Title:     newSession.Title,
+	}, code.CodeSuccess
 }
 
 func StreamMessageToExistingSession(userName string, sessionID string, userQuestion string, modelType string, writer http.ResponseWriter) code.Code {
@@ -177,6 +234,14 @@ func ChatSend(userName string, sessionID string, userQuestion string, modelType 
 }
 
 func GetChatHistory(userName string, sessionID string) ([]model.History, code.Code) {
+	session, err := daosession.GetSessionByID(sessionID)
+	if err != nil {
+		return nil, code.CodeRecordNotFound
+	}
+	if session.UserName != userName {
+		return nil, code.CodeForbidden
+	}
+
 	// 1. 尝试从内存获取 (AIHelper)
 	manager := aihelper.GetGlobalManager()
 	helper, exists := manager.GetAIHelper(userName, sessionID)
@@ -186,8 +251,17 @@ func GetChatHistory(userName string, sessionID string) ([]model.History, code.Co
 		messages = helper.GetMessages()
 	}
 
-	// 2. 如果内存中没有（或者重启后还没加载到内存），则从数据库加载
-	if len(messages) == 0 {
+	shouldLoadFromDB := len(messages) == 0
+	for _, msg := range messages {
+		if msg.ID == 0 {
+			shouldLoadFromDB = true
+			break
+		}
+	}
+
+	// 2. 如果内存中没有，或内存消息还没有数据库 ID，则从数据库加载
+	if shouldLoadFromDB {
+		messages = nil
 		dbMsgs, err := daomessage.GetMessagesBySessionID(sessionID)
 		if err != nil {
 			log.Println("GetChatHistory DB error:", err)
@@ -212,6 +286,28 @@ func GetChatHistory(userName string, sessionID string) ([]model.History, code.Co
 	return history, code.CodeSuccess
 }
 
+func ExtractChatMemory(userName string, sessionID string) (string, []model.History, code.Code) {
+	history, code_ := GetChatHistory(userName, sessionID)
+	if code_ != code.CodeSuccess {
+		return "", nil, code_
+	}
+
+	var builder strings.Builder
+	for _, msg := range history {
+		role := "assistant"
+		if msg.IsUser {
+			role = "user"
+		}
+		builder.WriteString("### ")
+		builder.WriteString(role)
+		builder.WriteString("\n")
+		builder.WriteString(strings.TrimSpace(msg.Content))
+		builder.WriteString("\n\n")
+	}
+
+	return strings.TrimSpace(builder.String()), history, code.CodeSuccess
+}
+
 func ChatStreamSend(userName string, sessionID string, userQuestion string, modelType string, writer http.ResponseWriter) code.Code {
 
 	return StreamMessageToExistingSession(userName, sessionID, userQuestion, modelType, writer)
@@ -224,13 +320,16 @@ func DeleteSession(userName string, sessionID string) code.Code {
 		return code.CodeServerBusy
 	}
 	if session.UserName != userName {
-		return code.CodeInvalidParams
+		return code.CodeForbidden
 	}
 
-	err = daosession.DeleteSessionByID(sessionID)
-	if err != nil {
+	if err := daomessage.DeleteMessagesBySessionID(sessionID); err != nil {
 		return code.CodeServerBusy
 	}
+	if err := daosession.DeleteSessionByID(sessionID); err != nil {
+		return code.CodeServerBusy
+	}
+	aihelper.GetGlobalManager().RemoveAIHelper(userName, sessionID)
 	return code.CodeSuccess
 }
 
@@ -240,7 +339,7 @@ func DeleteMessage(userName string, messageID uint) code.Code {
 		return code.CodeRecordNotFound
 	}
 	if msg.UserName != userName {
-		return code.CodeInvalidParams
+		return code.CodeForbidden
 	}
 
 	if err := daomessage.DeleteMessageByID(messageID); err != nil {
@@ -248,5 +347,27 @@ func DeleteMessage(userName string, messageID uint) code.Code {
 	}
 
 	aihelper.GetGlobalManager().RemoveMessageFromSession(userName, msg.SessionID, messageID)
+	return code.CodeSuccess
+}
+
+func UpdateMessage(userName string, messageID uint, content string) code.Code {
+	content = strings.TrimSpace(content)
+	if content == "" {
+		return code.CodeInvalidParams
+	}
+
+	msg, err := daomessage.GetMessageByID(messageID)
+	if err != nil {
+		return code.CodeRecordNotFound
+	}
+	if msg.UserName != userName {
+		return code.CodeForbidden
+	}
+
+	if err := daomessage.UpdateMessageContentByID(messageID, content); err != nil {
+		return code.CodeServerBusy
+	}
+
+	aihelper.GetGlobalManager().UpdateMessageInSession(userName, msg.SessionID, messageID, content)
 	return code.CodeSuccess
 }

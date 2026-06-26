@@ -74,6 +74,18 @@ func (a *AIHelper) RemoveMessageByID(messageID uint) {
 	}
 }
 
+func (a *AIHelper) UpdateMessageContentByID(messageID uint, content string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	for _, msg := range a.messages {
+		if msg.ID == messageID {
+			msg.Content = content
+			return
+		}
+	}
+}
+
 // 同步生成
 func (a *AIHelper) GenerateResponse(userName string, ctx context.Context, userQuestion string) (*model.Message, error) {
 
