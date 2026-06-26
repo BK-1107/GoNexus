@@ -17,7 +17,17 @@ export function ChatPage() {
     try {
       const res = await chatApi.extractMemory(currentSessionId)
       if (res.data?.status_code === 1000) {
-        await navigator.clipboard.writeText(res.data.memory || "")
+        const memory = res.data.memory || ""
+        const blob = new Blob([memory], { type: "text/markdown;charset=utf-8" })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+        link.href = url
+        link.download = `gonexus-memory-${currentSessionId}-${timestamp}.md`
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        URL.revokeObjectURL(url)
       }
     } catch (err) {
       console.error("Failed to extract memory", err)

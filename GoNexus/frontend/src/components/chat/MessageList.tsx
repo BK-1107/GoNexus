@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 import { useChatStore } from "@/store/chatStore"
 import { chatApi } from "@/api/chat"
-import { Check, Edit3, X } from "lucide-react"
+import { Check, Edit3, Trash2, X } from "lucide-react"
 import { useState } from "react"
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -114,33 +114,35 @@ export function MessageList() {
                   <div className="absolute -right-3 top-6 w-6 h-6 bg-secondary border-t-4 border-r-4 border-black transform rotate-45" />
                 )}
                 
-                <button
-                  type="button"
-                  onClick={() => startEditing(i, msg.content, persistedId)}
-                  disabled={deletingKey !== null || isEditing}
-                  title="Edit message"
-                  className="absolute -left-3 -top-3 z-30 flex h-7 w-7 items-center justify-center border-4 border-black bg-primary text-black opacity-0 shadow-[3px_3px_0px_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none group-hover/message:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Edit3 size={13} strokeWidth={4} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleDeleteMessage(i, persistedId)}
-                  disabled={deletingKey !== null}
-                  title="Delete message"
-                  className="absolute -right-3 -top-3 z-30 flex h-7 w-7 items-center justify-center border-4 border-black bg-destructive text-white opacity-0 shadow-[3px_3px_0px_#000] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none group-hover/message:opacity-100 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <X size={14} strokeWidth={5} />
-                </button>
-
                 <div
                   className={`relative z-10 px-6 py-4 text-[16px] leading-relaxed font-bold border-4 border-black shadow-brutal prose prose-stone max-w-none ${
                     msg.role === 'user' 
-                      ? 'bg-secondary text-black' 
-                      : 'bg-white text-black'
+                      ? 'bg-secondary text-black pr-20' 
+                      : 'bg-white text-black pr-20'
                   }`}
                 >
+                  {!isEditing && (
+                    <div className="absolute right-3 top-3 z-20 flex gap-1 rounded-none bg-inherit opacity-0 transition-opacity group-hover/message:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => startEditing(i, msg.content, persistedId)}
+                        disabled={deletingKey !== null}
+                        title="Edit message"
+                        className="flex h-7 w-7 items-center justify-center bg-transparent text-black/70 transition-colors hover:bg-black/10 hover:text-black disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Edit3 size={13} strokeWidth={3.5} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteMessage(i, persistedId)}
+                        disabled={deletingKey !== null}
+                        title="Delete message"
+                        className="flex h-7 w-7 items-center justify-center bg-transparent text-black/70 transition-colors hover:bg-black/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Trash2 size={13} strokeWidth={3.5} />
+                      </button>
+                    </div>
+                  )}
                   {isEditing ? (
                     <div className="flex flex-col gap-3">
                       <textarea

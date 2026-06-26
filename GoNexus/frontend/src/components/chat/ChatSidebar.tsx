@@ -255,13 +255,14 @@ export function ChatSidebar() {
                   }`}
                 >
                   <MessageSquare size={20} strokeWidth={currentSessionId === s.id ? 3 : 2} />
-                  <span className="truncate pr-6 font-black uppercase text-sm">{s.title || "Untitled Chat"}</span>
+                  <span className="truncate pr-8 font-black uppercase text-sm">{s.title || "Untitled Chat"}</span>
                 </button>
                 <button 
                   onClick={(e) => openDeleteModal(e, s)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-2 hover:bg-destructive border-2 border-transparent hover:border-black transition-all active:scale-90 rounded-none bg-white shadow-[2px_2px_0px_#000] group-hover:translate-x-0"
+                  title="Delete session"
+                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center bg-transparent text-black/60 opacity-0 transition-colors hover:bg-black/10 hover:text-destructive group-hover:opacity-100"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={16} strokeWidth={3} />
                 </button>
               </div>
             ))
