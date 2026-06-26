@@ -16,6 +16,16 @@ type (
 		ClassName string `json:"class_name,omitempty"`
 		controller.Response
 	}
+
+	GeneratePromptRequest struct {
+		Analysis string `json:"analysis" binding:"required"`
+		Target   string `json:"target"`
+	}
+
+	GeneratePromptResponse struct {
+		Prompt string `json:"prompt,omitempty"`
+		controller.Response
+	}
 )
 
 // 处理图片识别请求，具体的图片分析逻辑交给 service 层。
@@ -40,5 +50,26 @@ func RecognizeImage(c *gin.Context) {
 
 	res.Success()
 	res.ClassName = className
+	c.JSON(http.StatusOK, res)
+}
+
+func GeneratePrompt(c *gin.Context) {
+	req := new(GeneratePromptRequest)
+	res := new(GeneratePromptResponse)
+
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+		return
+	}
+
+	generated, err := image.GeneratePromptFromAnalysis(req.Analysis)
+	if err != nil {
+		log.Println("GeneratePrompt fail ", err)
+		c.JSON(http.StatusOK, res.CodeOf(code.CodeServerBusy))
+		return
+	}
+
+	res.Success()
+	res.Prompt = generated.Prompt
 	c.JSON(http.StatusOK, res)
 }

@@ -21,5 +21,10 @@ export const imageApi = {
         'Content-Type': 'multipart/form-data',
       },
     })
-  }
+  },
+
+  generatePrompt: (analysis: string) => client.post('/image/prompt', {
+    analysis,
+    target: 'stable-diffusion',
+  })
 }

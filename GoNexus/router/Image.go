@@ -8,4 +8,5 @@ import (
 
 func ImageRouter(r *gin.RouterGroup) {
 	r.POST("/recognize", image.RecognizeImage)
+	r.POST("/prompt", image.GeneratePrompt)
 }

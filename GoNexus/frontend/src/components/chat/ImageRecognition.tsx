@@ -1,4 +1,4 @@
-import { Upload, Image as ImageIcon, X, Loader2, CheckCircle2, Zap, Search, Info, Brain, MessageSquare } from "lucide-react"
+import { Upload, Image as ImageIcon, X, Loader2, CheckCircle2, Zap, Search, Info, Brain, MessageSquare, Wand2, Copy, ImagePlus } from "lucide-react"
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { imageApi } from "@/api/image"
@@ -14,6 +14,10 @@ interface ImageMeta {
   lastModified: string
 }
 
+interface GeneratedPrompt {
+  prompt: string
+}
+
 export function ImageRecognition() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -21,6 +25,9 @@ export function ImageRecognition() {
   const [backendResult, setBackendResult] = useState<string | null>(null)
   const [memorySession, setMemorySession] = useState<{ id: string; title: string } | null>(null)
   const [isSavingMemory, setIsSavingMemory] = useState(false)
+  const [generatedPrompt, setGeneratedPrompt] = useState<GeneratedPrompt | null>(null)
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false)
+  const [copiedPrompt, setCopiedPrompt] = useState(false)
   const [meta, setMeta] = useState<ImageMeta | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const requireAuth = useRequireAuth()
@@ -37,6 +44,9 @@ export function ImageRecognition() {
       setBackendResult(null)
       setMemorySession(null)
       setIsSavingMemory(false)
+      setGeneratedPrompt(null)
+      setIsGeneratingPrompt(false)
+      setCopiedPrompt(false)
 
       // Extract metadata
       const img = new Image()
@@ -68,6 +78,8 @@ export function ImageRecognition() {
       if (res.data?.status_code === 1000) {
         setBackendResult(res.data.class_name)
         setMemorySession(null)
+        setGeneratedPrompt(null)
+        setCopiedPrompt(false)
         setStatus('done')
       } else {
         setStatus('error')
@@ -108,6 +120,33 @@ export function ImageRecognition() {
     navigate("/chat")
   }
 
+  const handleGeneratePrompt = async () => {
+    if (!backendResult || isGeneratingPrompt) return
+    if (!requireAuth()) return
+
+    setIsGeneratingPrompt(true)
+    setCopiedPrompt(false)
+    try {
+      const res = await imageApi.generatePrompt(backendResult)
+      if (res.data?.status_code === 1000) {
+        setGeneratedPrompt({
+          prompt: res.data.prompt || "",
+        })
+      }
+    } catch (err) {
+      console.error("Failed to generate prompt", err)
+    } finally {
+      setIsGeneratingPrompt(false)
+    }
+  }
+
+  const handleCopyPrompt = async () => {
+    if (!generatedPrompt?.prompt) return
+    await navigator.clipboard.writeText(generatedPrompt.prompt)
+    setCopiedPrompt(true)
+    window.setTimeout(() => setCopiedPrompt(false), 1600)
+  }
+
   const reset = () => {
     setSelectedFile(null)
     setPreviewUrl(null)
@@ -115,6 +154,9 @@ export function ImageRecognition() {
     setBackendResult(null)
     setMemorySession(null)
     setIsSavingMemory(false)
+    setGeneratedPrompt(null)
+    setIsGeneratingPrompt(false)
+    setCopiedPrompt(false)
     setMeta(null)
   }
 
@@ -158,7 +200,7 @@ export function ImageRecognition() {
                 <button onClick={reset} className="absolute -top-4 -right-4 bg-destructive border-4 border-black p-2 z-10 shadow-brutal hover:translate-x-1 hover:translate-y-1 transition-all">
                   <X size={20} />
                 </button>
-                <div className="border-4 border-black aspect-video bg-muted relative overflow-hidden">
+                <div className="relative h-[260px] overflow-hidden border-4 border-black bg-muted md:h-[340px]">
                   <img src={previewUrl!} alt="Preview" className="w-full h-full object-contain" />
                   {status === 'analyzing' && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -207,9 +249,10 @@ export function ImageRecognition() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
             </div>
 
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="comic-card p-6 bg-accent border-primary flex flex-col gap-4">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="comic-card self-start p-6 bg-accent border-primary flex flex-col gap-4">
               <h3 className="text-xl font-black uppercase flex items-center gap-2">
                 <Search size={20} /> Backend Intelligence
               </h3>
@@ -218,18 +261,31 @@ export function ImageRecognition() {
                 {status === 'analyzing' && <p className="font-black animate-pulse">BACKEND IS PROCESSING DATA...</p>}
                 {status === 'done' && backendResult && (
                   <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="space-y-4">
-                    <div className="bg-white border-4 border-black p-4 shadow-brutal">
+                    <div className="h-[360px] overflow-y-auto bg-white border-4 border-black p-4 shadow-brutal text-left">
                       <p className="font-black text-left leading-tight text-lg">{backendResult}</p>
                     </div>
                     <div className="flex items-center gap-2 text-primary font-black">
                       <CheckCircle2 size={24} /> 100% VERIFIED BY GONEXUS
                     </div>
-                    <div className="flex flex-wrap justify-center gap-3 pt-2">
+                    <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={handleGeneratePrompt}
+                        disabled={isGeneratingPrompt}
+                        className="comic-btn w-full justify-center bg-primary px-4 py-2.5 text-sm font-black uppercase whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isGeneratingPrompt ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <Wand2 size={18} strokeWidth={3} />
+                        )}
+                        Generate Prompt
+                      </button>
                       <button
                         type="button"
                         onClick={handleSaveToMemory}
                         disabled={isSavingMemory || Boolean(memorySession)}
-                        className="comic-btn bg-primary px-5 py-3 font-black uppercase disabled:cursor-not-allowed disabled:opacity-60"
+                        className="comic-btn w-full justify-center bg-primary px-4 py-2.5 text-sm font-black uppercase whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isSavingMemory ? (
                           <Loader2 size={18} className="animate-spin" />
@@ -238,6 +294,8 @@ export function ImageRecognition() {
                         )}
                         {memorySession ? "Saved to Memory" : "Save to Memory"}
                       </button>
+                    </div>
+                    <div className="flex justify-center">
                       {memorySession && (
                         <button
                           type="button"
@@ -257,6 +315,58 @@ export function ImageRecognition() {
           </div>
         )}
       </AnimatePresence>
+
+      {generatedPrompt && (
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="grid grid-cols-1 gap-6 lg:grid-cols-2"
+        >
+          <div className="comic-card bg-white p-6">
+            <div className="mb-4 flex items-center justify-between gap-3 border-b-4 border-black pb-3">
+              <h3 className="flex items-center gap-2 text-2xl font-black uppercase tracking-tighter">
+                <Wand2 size={24} strokeWidth={3} />
+                Prompt Studio
+              </h3>
+              <button
+                type="button"
+                onClick={handleCopyPrompt}
+                className="comic-btn bg-primary px-4 py-2 text-sm font-black uppercase"
+              >
+                <Copy size={16} strokeWidth={3} />
+                {copiedPrompt ? "Copied" : "Copy Prompt"}
+              </button>
+            </div>
+
+            <div>
+              <h4 className="mb-2 text-xs font-black uppercase tracking-widest text-black/50">Prompt</h4>
+              <textarea
+                value={generatedPrompt.prompt}
+                onChange={(event) => setGeneratedPrompt({ prompt: event.target.value })}
+                className="min-h-[360px] w-full resize-y border-4 border-black bg-white p-4 font-bold leading-relaxed outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="comic-card bg-accent p-6">
+            <div className="mb-4 flex items-center gap-2 border-b-4 border-black pb-3">
+              <ImagePlus size={24} strokeWidth={3} />
+              <h3 className="text-2xl font-black uppercase tracking-tighter">Generated Image</h3>
+            </div>
+            <div className="flex min-h-80 flex-col items-center justify-center gap-4 border-4 border-dashed border-black bg-white/60 p-6 text-center">
+              <ImagePlus size={54} strokeWidth={2.5} className="text-black/40" />
+              <p className="font-black uppercase text-black/50">Image generation API coming soon</p>
+              <button
+                type="button"
+                disabled
+                className="comic-btn bg-white px-5 py-3 font-black uppercase opacity-50"
+              >
+                Generate Image
+              </button>
+            </div>
+          </div>
+        </motion.section>
+      )}
     </div>
   )
 }
